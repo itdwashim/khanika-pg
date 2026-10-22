@@ -22,7 +22,11 @@ input,select,textarea{width:100%;margin-top:3px;padding:10px;border:1px solid #d
 .md{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:18px;z-index:30}.md>div{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:440px}
 footer{background:var(--nv);color:#ddd;text-align:center;padding:22px 14px;font-size:14px}
 @media(max-width:700px){.hero>div{grid-template-columns:1fr}.g{grid-template-columns:1fr}nav a{margin-left:9px;font-size:13px}}
-#nt{display:none;background:#fff3cd;color:#14213d;text-align:center;padding:9px 14px;font-weight:600;border-bottom:1px solid var(--ln)}
+#nt{display:none;background:#fff3cd;color:#14213d;font-weight:600;border-bottom:1px solid var(--ln);overflow:hidden;white-space:nowrap;padding:9px 0}
+#nt span{display:inline-block;padding-left:100%;animation:ntscroll 20s linear infinite}
+#nt:hover span{animation-play-state:paused}
+@keyframes ntscroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@media(prefers-reduced-motion:reduce){#nt{white-space:normal;text-align:center;padding:9px 14px}#nt span{animation:none;padding-left:0}}
 .cl{background:#fdecea;border:1px solid #f5c6c0;border-radius:12px;padding:16px;font-weight:600}
 </style>
 <script src="config.js"></script>
@@ -58,7 +62,7 @@ async function init(){
  $('#am').innerHTML=C.amenities.map(a=>`<span class=chip>${esc(a)}</span>`).join('');
  const ph=(C.phone||'').replace(/\D/g,'');$('#call').href='https://wa.me/'+(ph.length==10?'91'+ph:ph);$('#call').textContent='WhatsApp '+C.phone;
  $('#foot').innerHTML=esc(C.name)+' &middot; '+esc(C.address)+' &middot; Call/WhatsApp '+esc(C.phone)+(C.email?' &middot; <a href="mailto:'+esc(C.email)+'">'+esc(C.email)+'</a>':'')+(/^https:\/\//.test(C.mapUrl||'')?' &middot; <a href="'+esc(C.mapUrl)+'" target="_blank" rel="noopener">Find us on the map</a>':'');
- if(C.notice){$('#nt').textContent=C.notice;$('#nt').style.display='block'}
+ if(C.notice){const n=$('#nt');n.innerHTML='<span></span>';const sp=n.firstChild;sp.textContent=C.notice;n.style.display='block';sp.style.animationDuration=Math.max(10,sp.offsetWidth/80)+'s'}
  if(C.gallery&&C.gallery.length){GAL=C.gallery;gal()}
  $('#rt').innerHTML=C.rooms.length?C.rooms.map(r=>{const v=+r['Vacant Beds'];return `<tr><td>${esc(r.Room)}</td><td>${esc(r.Floor)}</td><td>Rs. ${num(r['Rent (Rs/month)'])}</td><td>${isNaN(v)?'<span class=mut>Call to check</span>':v>0?`<span class="tag av">${v} bed${v>1?'s':''} available</span>`:'<span class="tag fu">Full</span>'}</td></tr>`}).join(''):'<tr><td colspan=4>Please call us for availability.</td></tr>';
  $('#rn').textContent='Availability is updated by the PG office and may change during the day.';
