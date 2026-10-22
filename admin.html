@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Khanika PG - Website admin</title>
+<script src="config.js"></script>
+<style>
+:root{--or:#fca311;--nv:#14213d;--bg:#fff8e8;--ln:#f1d9a0;--ok:#2f7d57;--bad:#c0392b}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--nv);background:var(--bg)}
+header{background:var(--nv);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+header b{font:700 18px Georgia,serif;color:var(--or)}header a,header button.l{color:#fff;background:none;border:0;cursor:pointer;font:inherit;text-decoration:underline;margin-left:14px}
+main{max-width:900px;margin:0 auto;padding:18px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:18px;margin-bottom:16px}
+h2{font:700 22px Georgia,serif;margin:0 0 12px}h3{margin:18px 0 6px;font-size:16px}
+label{display:block;font-weight:600;font-size:13px;margin:12px 0 4px}
+input,textarea,select{width:100%;padding:9px 11px;border:1px solid #d9c48a;border-radius:9px;font:inherit;background:#fffdf6;color:var(--nv)}
+textarea{min-height:90px;resize:vertical}.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}@media(max-width:640px){.g2{grid-template-columns:1fr}}
+.btn{border:0;border-radius:10px;padding:10px 18px;font:600 15px system-ui;cursor:pointer;background:var(--nv);color:#fff}.btn.o{background:var(--or);color:var(--nv)}.btn.s{padding:5px 10px;font-size:13px}.btn.d{background:var(--bad)}.btn:disabled{opacity:.5;cursor:default}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.tabs button{border:1px solid var(--ln);background:#fff;border-radius:999px;padding:8px 16px;font:600 14px system-ui;cursor:pointer;color:var(--nv)}.tabs button.on{background:var(--or);border-color:var(--or)}
+.msg{margin:10px 0;padding:10px 12px;border-radius:9px;font-weight:600}.msg.ok{background:#e4f4ea;color:var(--ok)}.msg.err{background:#fdecea;color:var(--bad)}
+.hint{color:#6b6b6b;font-size:13px;margin:4px 0 0}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.stat{background:#fff8e8;border:1px solid var(--ln);border-radius:12px;padding:12px}.stat b{display:block;font-size:26px}
+.ph{display:grid;grid-template-columns:120px 1fr auto;gap:12px;align-items:center;border:1px solid var(--ln);border-radius:12px;padding:8px;margin-bottom:8px}.ph img{width:120px;height:80px;object-fit:cover;border-radius:8px;background:#eee}.ph .a{display:flex;gap:6px}
+@media(max-width:560px){.ph{grid-template-columns:90px 1fr}.ph img{width:90px}.ph .a{grid-column:1/3}}
+#login{max-width:380px;margin:60px auto}
+</style></head><body>
+<header><b>Khanika PG &middot; Website admin</b><span><a href="./" target="_blank" rel="noopener">View website</a><button class="l" id="out" style="display:none">Log out</button></span></header>
+<main>
+<div id="login" class="card"><h2>Admin login</h2><label>Admin key</label><input id="key" type="password" autocomplete="current-password" placeholder="Paste your admin key"><p class="hint">The admin key is in the Google script log (setup) and in the Data sheet, tab Config.</p><div id="lm"></div><button class="btn o" id="go">Log in</button></div>
+<div id="app" style="display:none">
+<div class="tabs"><button data-t="site" class="on">Website text</button><button data-t="photos">Photos</button><button data-t="over">Overview</button></div>
+<div id="m"></div>
+<section id="t-site" class="card">
+<h2>Website text</h2><p class="hint">Changes go live on the website straight after you press Save.</p>
+<label>Notice banner (shown at the top of the website; leave empty for none)</label><input id="notice" maxlength="300" placeholder="e.g. Admissions open for the 2026-27 session">
+<label>Admissions</label><select id="admissions"><option value="open">Open - show the admission form</option><option value="closed">Closed - show a message instead of the form</option></select>
+<div class="g2"><div><label>PG name</label><input id="name"></div><div><label>Tagline</label><input id="tagline"></div>
+<div><label>Phone / WhatsApp</label><input id="phone"></div><div><label>Email</label><input id="email" type="email"></div>
+<div><label>Starting rent (Rs per month)</label><input id="startingRent" inputmode="numeric"></div><div><label>Booking advance (Rs, blank for none)</label><input id="bookingAdvance" inputmode="numeric"></div>
+<div><label>UPI ID (for online payments)</label><input id="upi"></div><div><label>Name on the UPI account</label><input id="payee"></div></div>
+<label>Address</label><textarea id="address" style="min-height:60px"></textarea>
+<label>Google Maps link (https://...)</label><input id="mapUrl" placeholder="https://maps.app.goo.gl/...">
+<label>About the PG</label><textarea id="about"></textarea>
+<label>Amenities (one per line)</label><textarea id="amenities" style="min-height:120px"></textarea>
+<p><button class="btn o" id="save">Save website text</button></p>
+<p class="hint">Rooms, rent and bed availability come from the desktop app (Settings &gt; Website &amp; Online Portal &gt; Update website).</p>
+</section>
+<section id="t-photos" class="card" style="display:none">
+<h2>Photo gallery</h2><p class="hint">Photos appear in the gallery on the website, in this order. If you add no photos, the original gallery is shown.</p>
+<input id="pf" type="file" accept="image/*" multiple style="display:none"><p><button class="btn o" id="add">+ Add photos</button> <span id="up" class="hint"></span></p>
+<div id="pl"></div><p><button class="btn" id="psave" style="display:none">Save captions and order</button></p>
+</section>
+<section id="t-over" class="card" style="display:none"><h2>Overview</h2><div class="stats" id="stats"></div>
+<p class="hint">New admissions, payment claims and service requests are collected into the desktop app (Students &gt; Import Online Forms, or automatically if you set up the website sync).</p></section>
+</div></main>
+<script>
+const $=s=>document.querySelector(s),KEYS=['notice','admissions','name','tagline','phone','email','startingRent','bookingAdvance','upi','payee','address','mapUrl','about'];
+let K=sessionStorage.getItem('khk')||'',D=null,GAL=[];
+async function api(action,data){const u=window.KHANIKA_API;if(!u||/PASTE/.test(u))throw new Error('config.js is not set up yet: paste your Google web app address in it.');
+ const r=await fetch(u,{method:'POST',body:JSON.stringify({action,key:K,data})});const j=await r.json();if(!j.ok)throw new Error(j.error||'Request failed');return j.result}
+const msg=(t,ok)=>{$('#m').innerHTML=t?`<div class="msg ${ok?'ok':'err'}">${String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>`:'';if(t&&ok)setTimeout(()=>{if($('#m').firstChild)$('#m').innerHTML=''},4000)};
+function fill(r){D=r;KEYS.forEach(k=>{$('#'+k).value=r.config[k]||''});$('#amenities').value=(r.amenitiesList||[]).join('\n');GAL=r.gallery||[];photos();
+ $('#stats').innerHTML=[['Rooms on the website',r.rooms],['New admission forms',r.pending.admissions],['Payment claims',r.pending.claims],['Service requests',r.pending.requests],['Gallery photos',GAL.length]].map(([a,b])=>`<div class="stat"><b>${b}</b>${a}</div>`).join('')}
+async function enter(){try{fill(await api('siteGet'));$('#login').style.display='none';$('#app').style.display='block';$('#out').style.display='inline'}catch(e){K='';sessionStorage.removeItem('khk');$('#lm').innerHTML='<div class="msg err">'+e.message+'</div>'}}
+$('#go').onclick=()=>{K=$('#key').value.trim();if(!K)return;sessionStorage.setItem('khk',K);$('#lm').innerHTML='';enter()};
+$('#key').onkeydown=e=>{if(e.key=='Enter')$('#go').click()};$('#out').onclick=()=>{sessionStorage.removeItem('khk');location.reload()};
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x==b));['site','photos','over'].forEach(t=>$('#t-'+t).style.display=t==b.dataset.t?'block':'none');msg('')});
+$('#save').onclick=async()=>{const c={};KEYS.forEach(k=>c[k]=$('#'+k).value.trim());c.amenities=$('#amenities').value.split('\n').map(x=>x.trim()).filter(Boolean);
+ $('#save').disabled=true;try{fill(await api('siteSet',{config:c}));msg('Saved. The website is updated.',1)}catch(e){msg(e.message)}$('#save').disabled=false};
+function photos(){$('#pl').innerHTML=GAL.length?GAL.map((g,i)=>`<div class="ph" data-i="${i}"><img src="${g.s}" alt=""><input value="${(g.c||'').replace(/"/g,'&quot;')}" maxlength="120" placeholder="Caption" data-c="${i}"><div class="a"><button class="btn s" data-u="${i}" ${i?'':'disabled'}>&uarr;</button><button class="btn s" data-d="${i}" ${i<GAL.length-1?'':'disabled'}>&darr;</button><button class="btn s d" data-x="${i}">Delete</button></div></div>`).join(''):'<p class="hint">No photos uploaded yet. The original gallery is shown on the website.</p>';
+ $('#psave').style.display=GAL.length?'inline-block':'none'}
+$('#pl').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const g=()=>{document.querySelectorAll('[data-c]').forEach(x=>GAL[+x.dataset.c].c=x.value)};
+ if(b.dataset.u!=null){g();const i=+b.dataset.u;[GAL[i-1],GAL[i]]=[GAL[i],GAL[i-1]];photos()}
+ else if(b.dataset.d!=null){g();const i=+b.dataset.d;[GAL[i+1],GAL[i]]=[GAL[i],GAL[i+1]];photos()}
+ else if(b.dataset.x!=null){if(!confirm('Delete this photo from the website?'))return;try{fill(await api('galleryDel',{id:GAL[+b.dataset.x].id}));msg('Photo deleted.',1)}catch(er){msg(er.message)}}};
+$('#psave').onclick=async()=>{document.querySelectorAll('[data-c]').forEach(x=>GAL[+x.dataset.c].c=x.value);try{fill(await api('gallerySave',{items:GAL.map(g=>({id:g.id,c:g.c}))}));msg('Captions and order saved.',1)}catch(e){msg(e.message)}};
+$('#add').onclick=()=>$('#pf').click();
+const shrink=f=>new Promise((res,rej)=>{const r=new FileReader;r.onerror=()=>rej(new Error('Could not read the photo'));r.onload=()=>{const im=new Image;im.onerror=()=>rej(new Error('Not a valid photo: '+f.name));im.onload=()=>{const k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);let q=.8,d=c.toDataURL('image/jpeg',q);while(d.length>1900000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q)}res(d)};im.src=r.result};r.readAsDataURL(f)});
+$('#pf').onchange=async()=>{const fs=[...$('#pf').files];$('#pf').value='';let n=0;for(const f of fs){try{$('#up').textContent='Uploading '+(n+1)+' of '+fs.length+'...';fill(await api('galleryAdd',{d:await shrink(f),caption:f.name.replace(/\.\w+$/,'').replace(/[-_]+/g,' ').slice(0,60)}));n++}catch(e){msg(f.name+': '+e.message);break}}$('#up').textContent='';if(n)msg(n+' photo(s) added.',1)};
+if(K)enter();
+</script></body></html>
