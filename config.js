@@ -1,1 +1,1 @@
-window.KHANIKA_API='https://script.google.com/macros/s/AKfycbzaDn1ASf17wEwl5YUQupFjWDCYGycuBoUL6zKkt4IcU7bAXAu6CoNNcvezEIY2_yT2-g/exec';
+window.KHANIKA_API='https://script.google.com/macros/s/AKfycbzNPSdfkD_yNp7EVQ3gQ4uTHXrLoCbdT4WGNh-MxWcM93ff77mVyNPFEKqAnntqmXW-yQ/exec';
