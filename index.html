@@ -64,6 +64,7 @@ async function init(){
  $('#foot').innerHTML=esc(C.name)+' &middot; '+esc(C.address)+' &middot; Call/WhatsApp '+esc(C.phone)+(C.email?' &middot; <a href="mailto:'+esc(C.email)+'">'+esc(C.email)+'</a>':'')+(/^https:\/\//.test(C.mapUrl||'')?' &middot; <a href="'+esc(C.mapUrl)+'" target="_blank" rel="noopener">Find us on the map</a>':'');
  if(C.notice){const n=$('#nt');n.innerHTML='<span></span>';const sp=n.firstChild;sp.textContent=C.notice;n.style.display='block';sp.style.animationDuration=Math.max(10,sp.offsetWidth/80)+'s'}
  if(C.gallery&&C.gallery.length){GAL=C.gallery;gal()}
+ if(C.flyer){const ai=$('#adimg');ai.onerror=()=>{ai.onerror=null;ai.src=IMG.ad};ai.src=C.flyer}
  $('#rt').innerHTML=C.rooms.length?C.rooms.map(r=>{const v=+r['Vacant Beds'];return `<tr><td>${esc(r.Room)}</td><td>${esc(r.Floor)}</td><td>Rs. ${num(r['Rent (Rs/month)'])}</td><td>${isNaN(v)?'<span class=mut>Call to check</span>':v>0?`<span class="tag av">${v} bed${v>1?'s':''} available</span>`:'<span class="tag fu">Full</span>'}</td></tr>`}).join(''):'<tr><td colspan=4>Please call us for availability.</td></tr>';
  $('#rn').textContent='Availability is updated by the PG office and may change during the day.';
  form();portal();
