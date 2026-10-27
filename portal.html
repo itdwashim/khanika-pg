@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="en"><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+:root{--or:#fca311;--nv:#14213d;--bg:#fff8e8;--ln:#f1d9a0;--ok:#2f7d57;--bad:#c0392b}
+*{box-sizing:border-box}body{margin:0;font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--nv);background:var(--bg)}
+a{color:inherit}header{position:sticky;top:0;z-index:5;background:var(--nv);color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 18px}
+header b{font:700 17px Georgia,serif;letter-spacing:.04em;color:var(--or)}nav a{color:#fff;text-decoration:none;margin-left:14px;font-size:14px}nav a:hover{color:var(--or)}
+section{max-width:1000px;margin:0 auto;padding:30px 18px}h2{font:700 26px Georgia,serif;margin:0 0 14px}
+.hero{background:var(--or);padding:34px 18px}.hero>div{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center}
+.hero h1{font:800 clamp(30px,5vw,48px)/1.1 system-ui;margin:0 0 10px}.hero img{width:100%;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.btn{display:inline-block;border:0;border-radius:10px;padding:11px 18px;font:600 15px system-ui;cursor:pointer;text-decoration:none;background:var(--nv);color:#fff}.btn.o{background:var(--or);color:var(--nv)}.btn.w{background:#fff;color:var(--nv)}.btn.s{padding:6px 11px;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.chip{background:var(--nv);color:#fff;border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}th{background:var(--nv);color:#fff;text-align:left;padding:9px 12px;font-size:13px}td{padding:9px 12px;border-top:1px solid var(--ln)}.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--ln)}
+.tag{display:inline-block;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700}.av{background:#d6f0e0;color:var(--ok)}.fu{background:#fbdcd8;color:var(--bad)}.pn{background:#fff0c2;color:#9a6b00}.pd{background:#d6f0e0;color:var(--ok)}.pa{background:#e5dcfb;color:#6a3fb8}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.gal figure{margin:0;cursor:zoom-in;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--ln)}.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}.gal figcaption{padding:6px 10px;font-size:13px}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}#lb img{max-width:100%;max-height:90vh;border-radius:8px}
+.card{background:#fff;border:1px solid var(--ln);border-radius:14px;padding:18px;margin-bottom:16px}fieldset{border:1px solid var(--ln);border-radius:12px;margin:0 0 14px;padding:12px 14px;background:#fff}legend{font-weight:700;padding:0 6px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:12px}.w{grid-column:1/-1}label{display:block;font-size:13px;color:#555}label i{color:var(--bad);font-style:normal}
+input,select,textarea{width:100%;margin-top:3px;padding:10px;border:1px solid #d7c79a;border-radius:8px;font:inherit;background:#fff;color:var(--nv)}textarea{min-height:80px}
+.err{color:var(--bad);font-weight:600;margin:8px 0}.okm{color:var(--ok);font-weight:600}.mut{color:#6b6b6b;font-size:13px}.ck{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:14px;color:var(--nv)}.ck input{width:auto;margin:3px 0 0}
+.md{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:18px;z-index:30}.md>div{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:440px}
+footer{background:var(--nv);color:#ddd;text-align:center;padding:22px 14px;font-size:14px}
+@media(max-width:700px){.hero>div{grid-template-columns:1fr}.g{grid-template-columns:1fr}nav a{margin-left:9px;font-size:13px}}
+#nt{display:none;background:#fff3cd;color:#14213d;font-weight:600;border-bottom:1px solid var(--ln);overflow:hidden;white-space:nowrap;padding:9px 0}
+#nt span{display:inline-block;padding-left:100%;animation:ntscroll 20s linear infinite}
+#nt:hover span{animation-play-state:paused}
+@keyframes ntscroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@media(prefers-reduced-motion:reduce){#nt{white-space:normal;text-align:center;padding:9px 14px}#nt span{animation:none;padding-left:0}}
+.cl{background:#fdecea;border:1px solid #f5c6c0;border-radius:12px;padding:16px;font-weight:600}
+.ltabs{display:flex;gap:8px;margin-bottom:12px}.ltabs button{flex:1;border:1px solid var(--ln);background:#fff;border-radius:999px;padding:9px;font:600 14px system-ui;cursor:pointer;color:var(--nv)}.ltabs button.on{background:var(--or);border-color:var(--or)}
+.ok{color:#2f7d57;font-weight:600}.pbtn{display:block;width:100%;margin:8px 0}
+</style>
+<script src="config.js"></script>
+<script>
+async function api(action,body){const u=window.KHANIKA_API;if(!u||/PASTE/.test(u))throw new Error('The website address is not set yet. Open config.js and paste your Google web app address.');const r=await fetch(u,{method:'POST',body:JSON.stringify(Object.assign({action},body))});const j=await r.json();if(!j.ok)throw new Error(j.error||'Request failed');return j.result}
+window.SITE_HOME='index.html';
+</script></head><body>
+<header><b id="hn">Khanika Student PG</b><nav><a id="home" href="#">&larr; Back to the website</a></nav></header>
+<section id="portal"><h2>Student portal</h2><div id="pbox"></div></section>
+<footer id="foot"></footer><div id="modal"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
+run=(f,...a)=>api('rpc',{fn:f,args:a}),
+em=e=>String((e&&e.message)||e).replace(/^Error:\s*/,''),num=n=>Number(n||0).toLocaleString('en-IN'),
+fd=s=>/^\d{4}-\d{2}-\d{2}/.test(s||'')?s.slice(8,10)+'-'+s.slice(5,7)+'-'+s.slice(0,4):(s||''),
+mt=m=>/^\d{4}-\d{2}$/.test(m||'')?new Date(m+'-01T00:00:00').toLocaleString('en-US',{month:'long'})+', '+m.slice(0,4):(m||'');
+let C={},TOK='',ME=null;
+const THEMES={cream:['#fff8e8','#fca311','#14213d','#f1d9a0'],white:['#ffffff','#fca311','#14213d','#e6e6e6'],sky:['#eef6ff','#2f80ed','#0b2545','#cfe3fb'],mint:['#effaf3','#27ae60','#0d3b2e','#c9ecd6'],rose:['#fff1f3','#e85d75','#4a1a2c','#f6ccd4'],lavender:['#f5f1ff','#7c5cff','#2a1b5c','#ded4fb'],sand:['#f7f3ec','#c68b2f','#2f2a22','#e3d9c6'],slate:['#f1f3f6','#f59e0b','#1f2937','#d7dbe2']};
+const shade=(h,f)=>'#'+[1,3,5].map(i=>Math.max(0,Math.min(255,Math.round(parseInt(h.slice(i,i+2),16)*(1+f)))).toString(16).padStart(2,'0')).join('');
+function applyTheme(c){let[bg,or,nv,ln]=THEMES[c.theme]||THEMES.cream;if(c.theme=='custom'){if(c.themeBg){bg=c.themeBg;ln=shade(bg,-.1)}if(c.themeAccent)or=c.themeAccent}const r=document.documentElement.style;r.setProperty('--bg',bg);r.setProperty('--or',or);r.setProperty('--nv',nv);r.setProperty('--ln',ln)}
+const saveTheme=()=>{try{localStorage.setItem('kh-site-theme',JSON.stringify({theme:C.theme,themeBg:C.themeBg,themeAccent:C.themeAccent}))}catch(e){}};
+const loadTheme=()=>{try{const t=JSON.parse(localStorage.getItem('kh-site-theme')||'null');if(t)applyTheme(t)}catch(e){}};
+function upi(p,amt,note){return 'upi://pay?pa='+encodeURIComponent(p.upi)+'&pn='+encodeURIComponent(p.payee||'')+(amt?'&am='+amt:'')+'&cu=INR&tn='+encodeURIComponent(note)}
+function qr(t){const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag({cellSize:Math.max(2,Math.floor(180/q.getModuleCount())),margin:2})}
+async function doLogin(){try{TOK=(await run('login',$('#ls').value,$('#lm').value)).token;await load()}catch(e){$('#le').textContent=em(e)}}
+async function load(){try{ME=await run('myData',TOK)}catch(e){portal();$('#le').textContent=em(e);return}
+ const st=s=>s=='Paid'?'pd':s=='Partial'?'pa':'pn',p=ME.pay,I=ME.invoices,due=I.reduce((a,i)=>a+Math.max(+i.Balance||0,0),0);
+ $('#pbox').innerHTML=`<div class=card><b>${esc(ME.name)}</b> &middot; ${esc(ME.sid)} ${ME.bed?'&middot; Bed '+esc(ME.bed):''} <button class="btn s" style="float:right" onclick="portal()">Log out</button><p style="margin:8px 0 0">Total due: <b style="color:${due?'var(--bad)':'var(--ok)'}">Rs. ${num(due)}</b></p></div>
+ <div class=card><h3 style="margin-top:0">My invoices</h3><div class=tw><table><thead><tr><th>Invoice</th><th>Month</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th></th></tr></thead><tbody>${I.map(i=>`<tr><td>${esc(i['Invoice No'])}</td><td>${esc(mt(i.Month))}</td><td>Rs. ${num(i.Total)}</td><td>Rs. ${num(i.Paid)}</td><td><b>Rs. ${num(i.Balance)}</b></td><td><span class="tag ${st(i.Status)}">${esc(i.Status)}</span></td><td>${(+i.Balance>0&&p.upi)?`<button class="btn s o" onclick="payDlg('${esc(i['Invoice No'])}',${+i.Balance})">Pay now</button>`:''}</td></tr>`).join('')||'<tr><td colspan=7>No invoices yet.</td></tr>'}</tbody></table></div>${p.upi?'':'<p class=mut>Online payment is not enabled. Please pay at the office.</p>'}</div>
+ <div class=card><h3 style="margin-top:0">My payment receipts</h3><div class=tw><table><thead><tr><th>Receipt</th><th>Date</th><th>Invoice</th><th>Amount</th><th>Mode</th><th></th></tr></thead><tbody>${ME.payments.map((x,k)=>`<tr><td>${esc(x['Receipt No'])}</td><td>${fd(x.Date)}</td><td>${esc(x['Invoice No'])}</td><td>Rs. ${num(x.Amount)}</td><td>${esc(x.Mode)}</td><td><button class="btn s" onclick="rcpt(${k})">Download PDF</button></td></tr>`).join('')||'<tr><td colspan=6>No receipts yet.</td></tr>'}</tbody></table></div></div>
+ ${ME.claims.length?`<div class=card><h3 style="margin-top:0">Payments I have reported</h3><div class=tw><table><thead><tr><th>Date</th><th>Invoice</th><th>Amount</th><th>UTR</th><th>Status</th></tr></thead><tbody>${ME.claims.map(c=>`<tr><td>${fd(String(c.Timestamp).slice(0,10))}</td><td>${esc(c['Invoice No'])}</td><td>Rs. ${num(c.Amount)}</td><td>${esc(c.UTR)}</td><td><span class="tag ${c.Status=='Approved'?'pd':c.Status=='Rejected'?'fu':'pn'}">${esc(c.Status)}</span></td></tr>`).join('')}</tbody></table></div></div>`:''}
+ <div class=card><h3 style="margin-top:0">Service requests &amp; complaints</h3><div class=g><label>Type<select id=rq><option>Maintenance</option><option>Housekeeping</option><option>Mess / Food</option><option>Wi-Fi</option><option>Water / Electricity</option><option>Complaint</option><option>Other</option></select></label><label class=w>Describe the request<textarea id=rm></textarea></label></div><div class=err id=re></div><button class="btn o" onclick="sendR()">Submit request</button>
+ <div class=tw style="margin-top:12px"><table><thead><tr><th>Date</th><th>Type</th><th>Request</th><th>Status</th><th>Reply</th></tr></thead><tbody>${ME.requests.map(r=>`<tr><td>${fd(String(r.Timestamp).slice(0,10))}</td><td>${esc(r.Type)}</td><td>${esc(r.Message)}</td><td><span class="tag ${r.Status=='Resolved'?'pd':'pn'}">${esc(r.Status)}</span></td><td>${esc(r.Reply)}</td></tr>`).join('')||'<tr><td colspan=5>No requests yet.</td></tr>'}</tbody></table></div></div>`}
+function payDlg(inv,bal){const p=ME.pay,u=amt=>upi(p,amt,'Rent '+inv+' '+ME.sid);const m=$('#modal');
+ m.innerHTML=`<div class=md><div><h3 style="margin-top:0">Pay invoice ${esc(inv)}</h3><label>Amount (Rs.)<input id=pa type=number value="${bal}"></label><div style="text-align:center;margin:12px 0" id=pq></div><a class="btn o" id=pl target="_top">Pay with UPI app</a><p class=mut>UPI ID: ${esc(p.upi)} (${esc(p.payee)}). After paying, enter the UPI reference / UTR number below so the office can verify and record it.</p><label>UPI reference / UTR number<input id=pu></label><label>Note (optional)<input id=pn></label><div class=err id=pe></div><button class="btn" onclick="claimP('${esc(inv)}')">I have paid</button> <button class="btn w" style="border:1px solid #ccc" onclick="$('#modal').innerHTML=''">Close</button></div></div>`;
+ const upd=()=>{const a=$('#pa').value;$('#pq').innerHTML=qr(u(a));$('#pl').href=u(a)};$('#pa').oninput=upd;upd()}
+async function claimP(inv){try{await run('claimPayment',TOK,inv,$('#pa').value,$('#pu').value,$('#pn').value);$('#modal').innerHTML='';await load();alert('Thank you. The office will verify your payment and update your invoice.')}catch(e){$('#pe').textContent=em(e)}}
+async function sendR(){try{await run('sendRequest',TOK,$('#rq').value,$('#rm').value);await load()}catch(e){$('#re').textContent=em(e)}}
+function rcpt(k){const x=ME.payments[k],{jsPDF}=window.jspdf,d=new jsPDF({format:'a5'});d.setFillColor(252,163,17).rect(0,0,148,28,'F');d.setTextColor(20,33,61).setFont('helvetica','bold').setFontSize(15).text(C.name,10,12);d.setFontSize(10).text('PAYMENT RECEIPT',10,21);d.setFont('helvetica','normal').setFontSize(10);let y=44;
+ [['Receipt No',x['Receipt No']],['Date',fd(x.Date)],['Received from',ME.name+' ('+ME.sid+')'],['Against invoice',x['Invoice No']],['Mode',x.Mode],['Amount','Rs. '+num(x.Amount)]].forEach(([a,b])=>{d.setFont('helvetica','bold').text(a,10,y).setFont('helvetica','normal').text(String(b),50,y);y+=9});
+ d.setFontSize(8).setTextColor(120).text('Computer-generated receipt. '+C.phone,10,200);d.save('Receipt-'+x['Receipt No']+'.pdf')}
+
+let OTPT=0;
+function portal(m){ME=null;TOK='';m=m||'id';const idh=`<p>Existing students: log in with your Student ID and registered mobile number to see invoices, receipts, pay rent and send requests.</p><label>Student ID<input id=ls placeholder="STU-24102026-0001" autocapitalize=characters></label><br><label>Registered mobile number<input id=lm type=tel></label><button class="btn o" onclick="doLogin()">Log in</button>`,
+ oh=`<p>Enter the mobile number registered with the PG. We will send a 6-digit OTP to it by SMS.</p><label>Registered mobile number<input id=om type=tel inputmode=numeric maxlength=14></label><div style="margin-top:10px"><button class="btn o" id=osb onclick="otpSend()">Send OTP</button></div><div id=ov style="display:none;margin-top:12px"><label>OTP received by SMS<input id=oc inputmode=numeric autocomplete=one-time-code maxlength=6></label><button class="btn o" onclick="otpVerify()">Verify and log in</button> <button class="btn w" id=orb onclick="otpSend()" disabled>Resend OTP</button></div>`;
+ $('#pbox').innerHTML=`<div class=card style="max-width:440px">${C.otp?`<div class=ltabs><button class="${m=='id'?'on':''}" onclick="portal('id')">Student ID</button><button class="${m=='otp'?'on':''}" onclick="portal('otp')">Mobile OTP</button></div>`:''}${m=='otp'&&C.otp?oh:idh}<div class=err id=le></div></div>`}
+function otpWait(n){clearInterval(OTPT);OTPT=setInterval(()=>{const b=$('#orb');if(!b){clearInterval(OTPT);return}n--;if(n<=0){clearInterval(OTPT);b.disabled=false;b.textContent='Resend OTP'}else{b.disabled=true;b.textContent='Resend in '+n+'s'}},1000)}
+async function otpSend(){const m=($('#om').value||'').replace(/\D/g,'').slice(-10);$('#le').className='err';$('#le').textContent='';if(m.length!=10){$('#le').textContent='Enter your 10-digit registered mobile number.';return}
+ try{$('#osb').disabled=true;await run('requestOtp',m);$('#ov').style.display='block';$('#le').className='ok';$('#le').textContent='If this number is registered, an OTP has been sent by SMS. It is valid for 10 minutes.';$('#oc').focus();otpWait(60)}catch(e){$('#le').textContent=em(e);$('#osb').disabled=false}}
+async function otpVerify(){try{const r=await run('verifyOtp',($('#om').value||'').replace(/\D/g,'').slice(-10),$('#oc').value);if(r.token){TOK=r.token;await load()}else pickDlg(r)}catch(e){$('#le').className='err';$('#le').textContent=em(e)}}
+function pickDlg(r){$('#pbox').innerHTML=`<div class=card style="max-width:440px"><h3>Choose the student</h3><p>More than one student uses this mobile number.</p>${r.students.map(s=>`<button class="btn w pbtn" onclick="pickGo('${esc(r.pick)}','${esc(s.sid)}')">${esc(s.name)} (${esc(s.sid)})</button>`).join('')}<div class=err id=le></div></div>`}
+async function pickGo(pk,sid){try{TOK=(await run('pickStudent',pk,sid)).token;await load()}catch(e){portal();$('#le').textContent=em(e)}}
+
+async function init(){
+ loadTheme();
+ try{C=await run('getPublic')}catch(e){$('#pbox').innerHTML='<p class=err>Could not load the page: '+esc(em(e))+'</p>';return}
+ applyTheme(C);saveTheme();document.title=C.name+' - Student Portal';$('#hn').textContent=C.name;
+ $('#foot').innerHTML=esc(C.name)+' &middot; '+esc(C.address)+' &middot; Call/WhatsApp '+esc(C.phone);
+ const a=$('#home');a.href=window.SITE_HOME||C.siteUrl||'./';if(!window.SITE_HOME)a.target='_top';
+ portal();
+}
+init();
+</script></body></html>

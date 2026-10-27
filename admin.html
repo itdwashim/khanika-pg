@@ -20,12 +20,14 @@ textarea{min-height:90px;resize:vertical}.g2{display:grid;grid-template-columns:
 .ph{display:grid;grid-template-columns:120px 1fr auto;gap:12px;align-items:center;border:1px solid var(--ln);border-radius:12px;padding:8px;margin-bottom:8px}.ph img{width:120px;height:80px;object-fit:cover;border-radius:8px;background:#eee}.ph .a{display:flex;gap:6px}
 @media(max-width:560px){.ph{grid-template-columns:90px 1fr}.ph img{width:90px}.ph .a{grid-column:1/3}}
 #login{max-width:380px;margin:60px auto}
+.sw{border:2px solid #ddd;border-radius:12px;padding:8px 12px;font:600 13px system-ui;cursor:pointer;display:inline-flex;gap:7px;align-items:center;margin:0 6px 8px 0;color:#14213d}.sw i{width:14px;height:14px;border-radius:50%;display:inline-block}.sw.on{outline:3px solid #14213d;outline-offset:1px}
+.chk{display:flex;gap:8px;align-items:center;font-weight:600;margin:8px 0}.chk input{width:auto}.sub{margin-left:26px}
 </style></head><body>
 <header><b>Khanika PG &middot; Website admin</b><span><a href="./" target="_blank" rel="noopener">View website</a><button class="l" id="out" style="display:none">Log out</button></span></header>
 <main>
 <div id="login" class="card"><h2>Admin login</h2><label>Admin key</label><input id="key" type="password" autocomplete="current-password" placeholder="Paste your admin key"><p class="hint">The admin key is in the Google script log (setup) and in the Data sheet, tab Config.</p><div id="lm"></div><button class="btn o" id="go">Log in</button></div>
 <div id="app" style="display:none">
-<div class="tabs"><button data-t="site" class="on">Website text</button><button data-t="photos">Photos</button><button data-t="over">Overview</button></div>
+<div class="tabs"><button data-t="site" class="on">Website text</button><button data-t="photos">Photos</button><button data-t="otp">Student OTP</button><button data-t="over">Overview</button></div>
 <div id="m"></div>
 <section id="t-site" class="card">
 <h2>Website text</h2><p class="hint">Changes go live on the website straight after you press Save.</p>
@@ -39,34 +41,55 @@ textarea{min-height:90px;resize:vertical}.g2{display:grid;grid-template-columns:
 <label>Google Maps link (https://...)</label><input id="mapUrl" placeholder="https://maps.app.goo.gl/...">
 <label>About the PG</label><textarea id="about"></textarea>
 <label>Amenities (one per line)</label><textarea id="amenities" style="min-height:120px"></textarea>
+<h3>Page options</h3>
+<label class="chk"><input type="checkbox" id="showRooms"> Show the Rooms, Rent &amp; Availability section</label>
+<label class="chk sub"><input type="checkbox" id="showRent"> Show the rent (also the &ldquo;Starting at&rdquo; line)</label>
+<label class="chk sub"><input type="checkbox" id="showAvail"> Show availability (beds free / full)</label>
+<h3>Background theme</h3><p class="hint">Changes the colours of the whole website and the student portal.</p>
+<div id="tsw"></div>
+<div id="tcustom" style="display:none"><div class="g2"><div><label>Page background colour</label><input type="color" id="themeBg" value="#ffffff"></div><div><label>Accent colour (buttons, top banner)</label><input type="color" id="themeAccent" value="#fca311"></div></div></div>
 <p><button class="btn o" id="save">Save website text</button></p>
 <p class="hint">Rooms, rent and bed availability come from the desktop app (Settings &gt; Website &amp; Online Portal &gt; Update website).</p>
 </section>
 <section id="t-photos" class="card" style="display:none">
-<h2>Flyer photo</h2><p class="hint">The big picture at the top of the website. A square or portrait photo about 1200 pixels wide looks best.</p>
+<h2>Flyer photo</h2><p class="hint">The big picture at the top of the website, shown in a 1200 &times; 900 frame (landscape, 4:3). Any photo is cropped from the centre to fit. If there is no flyer, nothing is shown there.</p>
 <div id="flv"></div>
-<input id="ff" type="file" accept="image/*" style="display:none"><p><button class="btn o" id="fadd">Change flyer photo</button> <button class="btn" id="fdel" style="display:none">Use the original flyer</button> <span id="fup" class="hint"></span></p>
+<input id="ff" type="file" accept="image/*" style="display:none"><p><button class="btn o" id="fadd">Change flyer photo</button> <button class="btn" id="fdel" style="display:none">Remove flyer</button> <span id="fup" class="hint"></span></p>
 <hr style="border:0;border-top:1px solid var(--ln);margin:18px 0">
 <h2>Photo gallery</h2><p class="hint">Photos appear in the gallery on the website, in this order. If you add no photos, the original gallery is shown.</p>
 <input id="pf" type="file" accept="image/*" multiple style="display:none"><p><button class="btn o" id="add">+ Add photos</button> <span id="up" class="hint"></span></p>
 <div id="pl"></div><p><button class="btn" id="psave" style="display:none">Save captions and order</button></p>
 </section>
+<section id="t-otp" class="card" style="display:none">
+<h2>Student login by mobile OTP</h2><p class="hint">Students can log in to the portal with an OTP sent by SMS to their registered mobile number. The SMS is sent by an SMS service that you pay for: create an account with one of them and paste its details here. In India, SMS services usually ask you to register a sender name and message template (DLT); their help pages guide you.</p>
+<p id="ost" class="hint"></p>
+<label>SMS service</label><select id="sp"><option value="">None - students use their Student ID only</option><option value="fast2sms">Fast2SMS</option><option value="msg91">MSG91</option><option value="twilio">Twilio</option><option value="webhook">My own SMS / WhatsApp service (webhook)</option></select>
+<div id="opw" style="display:none">
+<div data-p="fast2sms msg91 twilio webhook"><label>API key / auth token</label><input id="okey" type="password" autocomplete="off"></div>
+<div data-p="msg91"><label>MSG91 OTP template ID</label><input id="otpl"></div>
+<div data-p="twilio"><label>Twilio Account SID</label><input id="osid"><label>Twilio sender number (From)</label><input id="ofrom" placeholder="+1..."></div>
+<div data-p="webhook"><label>Webhook address (https://...)</label><input id="ourl"><p class="hint">The page sends {"mobile","otp","message"} as JSON to this address (with the key as a Bearer token if you entered one).</p></div>
+<label class="chk"><input type="checkbox" id="oen" checked> Show &ldquo;Mobile OTP&rdquo; on the student portal</label>
+</div>
+<p><button class="btn o" id="osave">Save</button></p>
+<h3>Send a test SMS</h3><div class="g2"><div><input id="otm" type="tel" placeholder="10-digit mobile number"></div><div><button class="btn" id="otest">Send test SMS</button></div></div>
+</section>
 <section id="t-over" class="card" style="display:none"><h2>Overview</h2><div class="stats" id="stats"></div>
 <p class="hint">New admissions, payment claims and service requests are collected into the desktop app (Students &gt; Import Online Forms, or automatically if you set up the website sync).</p></section>
 </div></main>
 <script>
-const $=s=>document.querySelector(s),KEYS=['notice','admissions','name','tagline','phone','email','startingRent','bookingAdvance','upi','payee','address','mapUrl','about'];
+const $=s=>document.querySelector(s),CHK=['showRooms','showRent','showAvail'],KEYS=['notice','admissions','name','tagline','phone','email','startingRent','bookingAdvance','upi','payee','address','mapUrl','about'];
 let K=sessionStorage.getItem('khk')||'',D=null,GAL=[];
 async function api(action,data){const u=window.KHANIKA_API;if(!u||/PASTE/.test(u))throw new Error('config.js is not set up yet: paste your Google web app address in it.');
  const r=await fetch(u,{method:'POST',body:JSON.stringify({action,key:K,data})});const j=await r.json();if(!j.ok)throw new Error(j.error||'Request failed');return j.result}
 const msg=(t,ok)=>{$('#m').innerHTML=t?`<div class="msg ${ok?'ok':'err'}">${String(t).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>`:'';if(t&&ok)setTimeout(()=>{if($('#m').firstChild)$('#m').innerHTML=''},4000)};
-function fill(r){D=r;const fy=r.flyer||'';$('#flv').innerHTML=fy?'<img src="'+fy+'" alt="Current flyer" style="max-width:260px;width:100%;border-radius:12px;display:block;margin:6px 0 12px">':'<p class="hint">The original flyer is showing.</p>';$('#fdel').style.display=fy?'inline-block':'none';KEYS.forEach(k=>{$('#'+k).value=r.config[k]||''});$('#amenities').value=(r.amenitiesList||[]).join('\n');GAL=r.gallery||[];photos();
+function fill(r){D=r;const fy=r.flyer||'';$('#flv').innerHTML=fy?'<img src="'+fy+'" alt="Current flyer" style="max-width:320px;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;display:block;margin:6px 0 12px">':'<p class="hint">No flyer is shown on the website right now.</p>';$('#fdel').style.display=fy?'inline-block':'none';KEYS.forEach(k=>{$('#'+k).value=r.config[k]||''});CHK.forEach(k=>{$('#'+k).checked=r.config[k]!=='no'});setTheme(r.config.theme||'cream',r.config.themeBg,r.config.themeAccent);showOpts();$('#amenities').value=(r.amenitiesList||[]).join('\n');GAL=r.gallery||[];photos();
  $('#stats').innerHTML=[['Rooms on the website',r.rooms],['New admission forms',r.pending.admissions],['Payment claims',r.pending.claims],['Service requests',r.pending.requests],['Gallery photos',GAL.length]].map(([a,b])=>`<div class="stat"><b>${b}</b>${a}</div>`).join('')}
 async function enter(){try{fill(await api('siteGet'));$('#login').style.display='none';$('#app').style.display='block';$('#out').style.display='inline'}catch(e){K='';sessionStorage.removeItem('khk');$('#lm').innerHTML='<div class="msg err">'+e.message+'</div>'}}
 $('#go').onclick=()=>{K=$('#key').value.trim();if(!K)return;sessionStorage.setItem('khk',K);$('#lm').innerHTML='';enter()};
 $('#key').onkeydown=e=>{if(e.key=='Enter')$('#go').click()};$('#out').onclick=()=>{sessionStorage.removeItem('khk');location.reload()};
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x==b));['site','photos','over'].forEach(t=>$('#t-'+t).style.display=t==b.dataset.t?'block':'none');msg('')});
-$('#save').onclick=async()=>{const c={};KEYS.forEach(k=>c[k]=$('#'+k).value.trim());c.amenities=$('#amenities').value.split('\n').map(x=>x.trim()).filter(Boolean);
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x==b));['site','photos','otp','over'].forEach(t=>$('#t-'+t).style.display=t==b.dataset.t?'block':'none');msg('');if(b.dataset.t=='otp')otpLoad()});
+$('#save').onclick=async()=>{const c={};KEYS.forEach(k=>c[k]=$('#'+k).value.trim());CHK.forEach(k=>c[k]=$('#'+k).checked?'yes':'no');c.theme=TSEL;c.themeBg=TSEL=='custom'?$('#themeBg').value:'';c.themeAccent=TSEL=='custom'?$('#themeAccent').value:'';c.amenities=$('#amenities').value.split('\n').map(x=>x.trim()).filter(Boolean);
  $('#save').disabled=true;try{fill(await api('siteSet',{config:c}));msg('Saved. The website is updated.',1)}catch(e){msg(e.message)}$('#save').disabled=false};
 function photos(){$('#pl').innerHTML=GAL.length?GAL.map((g,i)=>`<div class="ph" data-i="${i}"><img src="${g.s}" alt=""><input value="${(g.c||'').replace(/"/g,'&quot;')}" maxlength="120" placeholder="Caption" data-c="${i}"><div class="a"><button class="btn s" data-u="${i}" ${i?'':'disabled'}>&uarr;</button><button class="btn s" data-d="${i}" ${i<GAL.length-1?'':'disabled'}>&darr;</button><button class="btn s d" data-x="${i}">Delete</button></div></div>`).join(''):'<p class="hint">No photos uploaded yet. The original gallery is shown on the website.</p>';
  $('#psave').style.display=GAL.length?'inline-block':'none'}
@@ -76,9 +99,24 @@ $('#pl').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const
  else if(b.dataset.x!=null){if(!confirm('Delete this photo from the website?'))return;try{fill(await api('galleryDel',{id:GAL[+b.dataset.x].id}));msg('Photo deleted.',1)}catch(er){msg(er.message)}}};
 $('#psave').onclick=async()=>{document.querySelectorAll('[data-c]').forEach(x=>GAL[+x.dataset.c].c=x.value);try{fill(await api('gallerySave',{items:GAL.map(g=>({id:g.id,c:g.c}))}));msg('Captions and order saved.',1)}catch(e){msg(e.message)}};
 const shrink=f=>shrinkMax(f,1400);
+const cropTo=(f,W,H)=>new Promise((res,rej)=>{const r=new FileReader;r.onerror=()=>rej(new Error('Could not read the photo'));r.onload=()=>{const im=new Image;im.onerror=()=>rej(new Error('Not a valid photo: '+f.name));im.onload=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;const k=Math.max(W/im.width,H/im.height),w=im.width*k,h=im.height*k;c.getContext('2d').drawImage(im,(W-w)/2,(H-h)/2,w,h);let q=.88,d=c.toDataURL('image/jpeg',q);while(d.length>1900000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q)}res(d)};im.src=r.result};r.readAsDataURL(f)});
+const TH={cream:['Warm cream','#fff8e8','#fca311'],white:['White','#ffffff','#fca311'],sky:['Sky blue','#eef6ff','#2f80ed'],mint:['Mint','#effaf3','#27ae60'],rose:['Rose','#fff1f3','#e85d75'],lavender:['Lavender','#f5f1ff','#7c5cff'],sand:['Sand','#f7f3ec','#c68b2f'],slate:['Slate','#f1f3f6','#f59e0b'],custom:['Custom colours','','']};
+let TSEL='cream';
+function drawSw(){$('#tsw').innerHTML=Object.entries(TH).map(([k,[n,bg,ac]])=>`<button type="button" class="sw ${k==TSEL?'on':''}" data-k="${k}" style="background:${k=='custom'?'#fff':bg};border-color:${k=='custom'?'#bbb':ac}"><i style="background:${k=='custom'?$('#themeAccent').value:ac}"></i>${n}</button>`).join('');$('#tcustom').style.display=TSEL=='custom'?'block':'none'}
+function setTheme(t,bg,ac){TSEL=TH[t]?t:'cream';if(bg)$('#themeBg').value=bg;if(ac)$('#themeAccent').value=ac;drawSw()}
+$('#tsw').onclick=e=>{const b=e.target.closest('button');if(!b)return;TSEL=b.dataset.k;drawSw()};
+$('#themeAccent').oninput=drawSw;
+function showOpts(){const on=$('#showRooms').checked;['showRent','showAvail'].forEach(k=>{$('#'+k).disabled=!on;$('#'+k).parentNode.style.opacity=on?1:.5})}
+$('#showRooms').onchange=showOpts;
+function otpShow(){const p=$('#sp').value;document.querySelectorAll('[data-p]').forEach(e=>e.style.display=e.dataset.p.split(' ').includes(p)?'block':'none');$('#opw').style.display=p?'block':'none'}
+function otpFill(r){$('#sp').value=r.provider||'';$('#oen').checked=r.enabled!==false;$('#okey').value='';$('#okey').placeholder=r.keySet?'Saved - leave empty to keep it':'';$('#otpl').value=r.template||'';$('#ofrom').value=r.from||'';$('#osid').value=r.sid||'';$('#ourl').value=r.url||'';otpShow();$('#ost').textContent=r.configured?('OTP login is '+(r.enabled?'ON':'switched OFF')+' (service: '+r.provider+').'):'OTP login is not set up: students log in with their Student ID.'}
+async function otpLoad(){try{otpFill(await api('otpConfigGet',{}))}catch(e){msg(e.message)}}
+$('#sp').onchange=otpShow;
+$('#osave').onclick=async()=>{try{otpFill(await api('otpConfigSet',{provider:$('#sp').value,key:$('#okey').value.trim(),template:$('#otpl').value.trim(),from:$('#ofrom').value.trim(),sid:$('#osid').value.trim(),url:$('#ourl').value.trim(),enabled:$('#oen').checked}));msg('Saved.',1)}catch(e){msg(e.message)}};
+$('#otest').onclick=async()=>{try{await api('otpTest',{mobile:$('#otm').value});msg('Test message sent. Check the phone.',1)}catch(e){msg(e.message)}};
 $('#fadd').onclick=()=>$('#ff').click();
-$('#ff').onchange=async()=>{const f=$('#ff').files[0];$('#ff').value='';if(!f)return;try{$('#fup').textContent='Uploading...';fill(await api('flyerSet',{d:await shrinkMax(f,1600)}));msg('Flyer photo changed. The website shows it now.',1)}catch(e){msg(e.message)}$('#fup').textContent=''};
-$('#fdel').onclick=async()=>{if(!confirm('Go back to the original flyer?'))return;try{fill(await api('flyerClear',{}));msg('The original flyer is back.',1)}catch(e){msg(e.message)}};
+$('#ff').onchange=async()=>{const f=$('#ff').files[0];$('#ff').value='';if(!f)return;try{$('#fup').textContent='Uploading...';fill(await api('flyerSet',{d:await cropTo(f,1200,900)}));msg('Flyer photo changed. The website shows it now.',1)}catch(e){msg(e.message)}$('#fup').textContent=''};
+$('#fdel').onclick=async()=>{if(!confirm('Remove the flyer from the website?'))return;try{fill(await api('flyerClear',{}));msg('The flyer was removed from the website.',1)}catch(e){msg(e.message)}};
 $('#add').onclick=()=>$('#pf').click();
 const shrinkMax=(f,max)=>new Promise((res,rej)=>{const r=new FileReader;r.onerror=()=>rej(new Error('Could not read the photo'));r.onload=()=>{const im=new Image;im.onerror=()=>rej(new Error('Not a valid photo: '+f.name));im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);let q=.8,d=c.toDataURL('image/jpeg',q);while(d.length>1900000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q)}res(d)};im.src=r.result};r.readAsDataURL(f)});
 $('#pf').onchange=async()=>{const fs=[...$('#pf').files];$('#pf').value='';let n=0;for(const f of fs){try{$('#up').textContent='Uploading '+(n+1)+' of '+fs.length+'...';fill(await api('galleryAdd',{d:await shrink(f),caption:f.name.replace(/\.\w+$/,'').replace(/[-_]+/g,' ').slice(0,60)}));n++}catch(e){msg(f.name+': '+e.message);break}}$('#up').textContent='';if(n)msg(n+' photo(s) added.',1)};
