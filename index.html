@@ -31,13 +31,14 @@ footer{background:var(--nv);color:#ddd;text-align:center;padding:22px 14px;font-
 @keyframes ntscroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @media(prefers-reduced-motion:reduce){#nt{white-space:normal;text-align:center;padding:9px 14px}#nt span{animation:none;padding-left:0}}
 .cl{background:#fdecea;border:1px solid #f5c6c0;border-radius:12px;padding:16px;font-weight:600}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}#hlogo{display:none;height:40px;width:auto;max-width:90px;object-fit:contain;background:#fff;border-radius:8px;padding:2px}#wflag{flex:0 0 auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
 </style>
 <script src="config.js"></script>
 <script>
 async function api(action,body){const u=window.KHANIKA_API;if(!u||/PASTE/.test(u))throw new Error('The website address is not set yet. Open config.js and paste your Google web app address.');const r=await fetch(u,{method:'POST',body:JSON.stringify(Object.assign({action},body))});const j=await r.json();if(!j.ok)throw new Error(j.error||'Request failed');return j.result}
 window.PORTAL_URL='portal.html';
 </script></head><body>
-<header><b id="hn">Khanika Student PG</b><nav><a id="nr" href="#rooms">Rooms &amp; Rent</a><a href="#gallery">Gallery</a><a id="nv" href="#videos" style="display:none">Videos</a><a href="#apply">Apply</a><a id="pl" href="#">Student Login</a></nav></header><div id="nt"></div>
+<header><div class="brand"><img id="hlogo" alt=""><b id="hn">Khanika Student PG</b><svg id="wflag" viewBox="0 0 120 80" width="54" height="36" aria-label="Indian flag"><rect x="2" y="2" width="3" height="78" rx="1.5" fill="#c9a24a"/><circle cx="3.5" cy="2" r="3" fill="#f2c94c"/><path id="wf0" fill="#FF9933"/><path id="wf1" fill="#fff" stroke="#ddd" stroke-width=".3"/><path id="wf2" fill="#138808"/><g id="wfc" transform="translate(60,30)" stroke="#000080" stroke-width=".6" fill="none"><circle r="7.5"/><line x1="0" y1="0" x2="7.00" y2="0.00"/><line x1="0" y1="0" x2="6.76" y2="1.81"/><line x1="0" y1="0" x2="6.06" y2="3.50"/><line x1="0" y1="0" x2="4.95" y2="4.95"/><line x1="0" y1="0" x2="3.50" y2="6.06"/><line x1="0" y1="0" x2="1.81" y2="6.76"/><line x1="0" y1="0" x2="0.00" y2="7.00"/><line x1="0" y1="0" x2="-1.81" y2="6.76"/><line x1="0" y1="0" x2="-3.50" y2="6.06"/><line x1="0" y1="0" x2="-4.95" y2="4.95"/><line x1="0" y1="0" x2="-6.06" y2="3.50"/><line x1="0" y1="0" x2="-6.76" y2="1.81"/><line x1="0" y1="0" x2="-7.00" y2="0.00"/><line x1="0" y1="0" x2="-6.76" y2="-1.81"/><line x1="0" y1="0" x2="-6.06" y2="-3.50"/><line x1="0" y1="0" x2="-4.95" y2="-4.95"/><line x1="0" y1="0" x2="-3.50" y2="-6.06"/><line x1="0" y1="0" x2="-1.81" y2="-6.76"/><line x1="0" y1="0" x2="-0.00" y2="-7.00"/><line x1="0" y1="0" x2="1.81" y2="-6.76"/><line x1="0" y1="0" x2="3.50" y2="-6.06"/><line x1="0" y1="0" x2="4.95" y2="-4.95"/><line x1="0" y1="0" x2="6.06" y2="-3.50"/><line x1="0" y1="0" x2="6.76" y2="-1.81"/><circle r="1.4" fill="#000080"/></g></svg></div><nav><a id="nr" href="#rooms">Rooms &amp; Rent</a><a href="#gallery">Gallery</a><a id="nv" href="#videos" style="display:none">Videos</a><a href="#apply">Apply</a><a id="pl" href="#">Student Login</a></nav></header><div id="nt"></div>
 <div class="hero noimg"><div><div><h1 id="tag">Student PG, made easy.</h1><p id="addr" style="font-weight:600"></p><p id="starts" style="font-size:20px;font-weight:700"></p>
 <a class="btn" href="#apply">Apply for a room</a> <a class="btn w" id="pl2" href="#">Student login</a> <a class="btn w" id="call" href="#">Call / WhatsApp</a></div><img id="adimg" alt="" style="display:none"></div></div>
 <section id="about"><h2>About the PG</h2><p id="about-t"></p><div class="chips" id="am"></div></section>
@@ -67,7 +68,7 @@ async function init(){
  loadTheme();gal();
  try{C=await run('getPublic')}catch(e){$('#appbox').innerHTML='<p class=err>Could not load the page data: '+esc(em(e))+'</p>';return}
  applyTheme(C);saveTheme();
- document.title=C.name;$('#hn').textContent=C.name;$('#tag').textContent=C.tagline||'';$('#addr').textContent=C.address||'';
+ document.title=C.name;$('#hn').textContent=C.name;{var hl=$('#hlogo');if(C.logo){hl.onerror=function(){hl.style.display='none'};hl.src=C.logo;hl.style.display='block'}else hl.style.display='none'}$('#tag').textContent=C.tagline||'';$('#addr').textContent=C.address||'';
  $('#starts').textContent=(C.startingRent&&C.showRent!==false)?'Starting at Rs. '+num(C.startingRent)+' per month':'';$('#about-t').textContent=C.about||'';
  $('#am').innerHTML=C.amenities.map(a=>`<span class=chip>${esc(a)}</span>`).join('');
  const ph=(C.phone||'').replace(/\D/g,'');$('#call').href='https://wa.me/'+(ph.length==10?'91'+ph:ph);$('#call').textContent='WhatsApp '+C.phone;
@@ -113,4 +114,12 @@ function done(r,name){const p=r.pay;$('#appbox').innerHTML=`<div class=card><h3 
 async function claimB(ref,amt){try{await run('claimBooking',ref,$('#bu').value,amt);$('#be').className='okm';$('#be').textContent='Thank you. We will verify your payment and confirm your booking.'}catch(e){$('#be').className='err';$('#be').textContent=em(e)}}
 // ---- student portal
 init();
-</script></body></html>
+</script><script>
+(function(){var f=document.getElementById('wflag');if(!f)return;
+function o(x,ph){return 3.2*Math.sin((x-6)/108*7.85-ph)*((x-6)/108*.8+.2)}
+function P(a,b,ph){var t='M',u='',x;for(x=6;x<=114;x+=6)t+=(x==6?'':'L')+x+','+(a+o(x,ph)).toFixed(2);for(x=114;x>=6;x-=6)u+='L'+x+','+(b+o(x,ph)).toFixed(2);return t+u+'Z'}
+function draw(ph){f.querySelector('#wf0').setAttribute('d',P(4,21.33,ph));f.querySelector('#wf1').setAttribute('d',P(21.33,38.67,ph));f.querySelector('#wf2').setAttribute('d',P(38.67,56,ph));f.querySelector('#wfc').setAttribute('transform','translate(60,'+(30+o(60,ph)).toFixed(2)+')')}
+draw(0);if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+setInterval(function(){draw(Date.now()/260)},60)})();
+</script>
+</body></html>
