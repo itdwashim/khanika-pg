@@ -67,10 +67,45 @@ function payDlg(inv,bal){const p=ME.pay,u=amt=>upi(p,amt,'Rent '+inv+' '+ME.sid)
  const upd=()=>{const a=$('#pa').value;$('#pq').innerHTML=qr(u(a));$('#pl').href=u(a)};$('#pa').oninput=upd;upd()}
 let CLP=false;async function claimP(inv){if(CLP)return;CLP=true;const bb=document.querySelector('#modal .btn:not(.w)');if(bb){bb.disabled=true;bb.textContent='Sending...'}try{await run('claimPayment',TOK,inv,$('#pa').value,$('#pu').value,$('#pn').value);$('#modal').innerHTML='';await load();alert('Thank you. The office will verify your payment and update your invoice.')}catch(e){$('#pe').textContent=em(e)}finally{CLP=false;if(bb&&bb.isConnected){bb.disabled=false;bb.textContent='I have paid'}}}
 let SRQ=false;async function sendR(){if(SRQ)return;SRQ=true;const bb=document.querySelector('[onclick="sendR()"]');if(bb)bb.disabled=true;try{await run('sendRequest',TOK,$('#rq').value,$('#rm').value);await load()}catch(e){$('#re').textContent=em(e)}finally{SRQ=false;if(bb&&bb.isConnected)bb.disabled=false}}
-function rcpt(k){const x=ME.payments[k],{jsPDF}=window.jspdf,d=new jsPDF({format:'a5'});d.setFillColor(252,163,17).rect(0,0,148,28,'F');d.setTextColor(20,33,61).setFont('helvetica','bold').setFontSize(15).text(C.name,10,12);d.setFontSize(10).text('PAYMENT RECEIPT',10,21);d.setFont('helvetica','normal').setFontSize(10);let y=44;
+function rcptBasic(k){const x=ME.payments[k],{jsPDF}=window.jspdf,d=new jsPDF({format:'a5'});d.setFillColor(252,163,17).rect(0,0,148,28,'F');d.setTextColor(20,33,61).setFont('helvetica','bold').setFontSize(15).text(C.name,10,12);d.setFontSize(10).text('PAYMENT RECEIPT',10,21);d.setFont('helvetica','normal').setFontSize(10);let y=44;
  [['Receipt No',x['Receipt No']],['Date',fd(x.Date)],['Received from',ME.name+' ('+ME.sid+')'],['Against invoice',x['Invoice No']],['Mode',x.Mode],['Amount','Rs. '+num(x.Amount)]].forEach(([a,b])=>{d.setFont('helvetica','bold').text(a,10,y).setFont('helvetica','normal').text(String(b),50,y);y+=9});
  d.setFontSize(8).setTextColor(120).text('Computer-generated receipt. '+C.phone,10,200);d.save('Receipt-'+x['Receipt No']+'.pdf')}
 
+
+/* Downloaded receipt = the same receipt the office prints (logo, colours, watermark, signature), made by receipt-engine.html */
+let KIT=null,ENGF=null,ENGP=null;const ENGCB={};
+function engineLoad(){
+  if(ENGP)return ENGP;
+  ENGP=new Promise((res,rej)=>{
+    const f=document.createElement('iframe');f.setAttribute('aria-hidden','true');f.tabIndex=-1;f.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;border:0';
+    const to=setTimeout(()=>{ENGP=null;rej(new Error('The receipt maker did not start.'))},30000);
+    addEventListener('message',ev=>{
+      if(ev.origin!==location.origin||!ENGF||ev.source!==ENGF.contentWindow&&ev.source!==f.contentWindow)return;
+      const m=ev.data;if(!m||typeof m!=='object')return;
+      if(m.k==='khready'){clearTimeout(to);ENGF=f;res(f)}
+      else if(m.k==='khrcpt'&&ENGCB[m.id]){const c=ENGCB[m.id];delete ENGCB[m.id];m.err?c.rej(new Error(m.err)):c.res(m.blob)}
+    });
+    ENGF=f;f.src='receipt-engine.html';document.body.appendChild(f);
+  });
+  return ENGP}
+async function engineReceipt(dbx,pid){
+  const f=await engineLoad(),id=String(Math.random()).slice(2);
+  return new Promise((res,rej)=>{ENGCB[id]={res,rej};setTimeout(()=>{if(ENGCB[id]){delete ENGCB[id];rej(new Error('The receipt took too long.'))}},30000);f.contentWindow.postMessage({k:'khreq',id,pid,db:dbx},location.origin)})}
+async function rcpt(k){
+  const x=ME.payments[k];
+  try{
+    if(!KIT){const t=await run('receiptKit',TOK);KIT=t?JSON.parse(t):null}
+    if(!KIT)throw new Error('no design');
+    const invs=ME.invoices||[],inv=invs.find(i=>String(i['Invoice No'])===String(x['Invoice No']))||null,
+      pays=ME.payments.filter(y=>inv&&String(y['Invoice No'])===String(inv['Invoice No'])||y===x);
+    const dbx={settings:KIT,students:[{id:'S',name:ME.name,bed:'B'}],beds:[{id:'B',no:ME.bed||''}],
+      invoices:inv?[{id:'I',no:inv['Invoice No'],month:inv.Month,total:+inv.Total||0}]:[],
+      payments:pays.map(y=>({id:'P'+ME.payments.indexOf(y),no:y['Receipt No'],date:y.Date,amount:+y.Amount||0,mode:y.Mode||'',ref:y.Reference||'',invoice:inv&&String(y['Invoice No'])===String(inv['Invoice No'])?'I':'',student:'S'})),
+      charges:[],claims:[],requests:[],expenses:[],n:{},users:[]};
+    const blob=await engineReceipt(dbx,'P'+k),a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='Receipt-'+x['Receipt No']+'.pdf';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+  }catch(e){rcptBasic(k)}
+}
 function portal(){ME=null;TOK='';$('#pbox').innerHTML=`<div class=card style="max-width:440px"><p>Students: log in with your Student ID and the password given to you by the hostel office. You can then see your invoices and receipts, pay rent and send requests.</p><label>Student ID<input id=ls placeholder="K-24102026-001" autocapitalize=characters autocomplete=username></label><br><label>Password<input id=lp type=password autocomplete=current-password autocapitalize=characters onkeydown="if(event.key=='Enter')doLogin()"></label><label style="display:flex;gap:6px;align-items:center;margin:8px 0"><input type=checkbox style="width:auto" onchange="$('#lp').type=this.checked?'text':'password'"> Show password</label><button class="btn o" onclick="doLogin()">Log in</button><p class=hint style="margin-top:12px">Forgot your password, or never received one? Ask the hostel office for a new password.</p><div class=err id=le></div></div>`}
 
 async function init(){
