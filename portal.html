@@ -53,15 +53,17 @@ const saveTheme=()=>{try{localStorage.setItem('kh-site-theme',JSON.stringify({th
 const loadTheme=()=>{try{const t=JSON.parse(localStorage.getItem('kh-site-theme')||'null');if(t)applyTheme(t)}catch(e){}};
 function upi(p,amt,note){return 'upi://pay?pa='+encodeURIComponent(p.upi)+'&pn='+encodeURIComponent(p.payee||'')+(amt?'&am='+amt:'')+'&cu=INR&tn='+encodeURIComponent(note)}
 function qr(t){const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag({cellSize:Math.max(2,Math.floor(180/q.getModuleCount())),margin:2})}
-async function doLogin(){try{$('#le').textContent='';TOK=(await run('login',$('#ls').value,$('#lp').value)).token;await load()}catch(e){$('#le').textContent=em(e);if($('#lp'))$('#lp').value=''}}
+async function doLogin(){try{POPDONE=false;PH='';KIT=null;$('#le').textContent='';TOK=(await run('login',$('#ls').value,$('#lp').value)).token;await load()}catch(e){$('#le').textContent=em(e);if($('#lp'))$('#lp').value=''}}
 async function load(){try{ME=await run('myData',TOK)}catch(e){portal();$('#le').textContent=em(e);return}
  const st=s=>s=='Paid'?'pd':s=='Partial'?'pa':'pn',p=ME.pay,I=ME.invoices,due=I.reduce((a,i)=>a+Math.max(+i.Balance||0,0),0);
- $('#pbox').innerHTML=`<div class=card><b>${esc(ME.name)}</b> &middot; ${esc(ME.sid)} ${ME.bed?'&middot; Bed '+esc(ME.bed):''} <button class="btn s" style="float:right" onclick="portal()">Log out</button><p style="margin:8px 0 0">Total due: <b style="color:${due?'var(--bad)':'var(--ok)'}">Rs. ${num(due)}</b></p></div>
+ $('#pbox').innerHTML=`<div class=card><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class=sph id=sph>${esc(String(ME.name||'?').trim().charAt(0).toUpperCase())}</div><div style="flex:1;min-width:170px"><b style="font-size:17px">${esc(ME.name)}</b><div class=mut>${esc(ME.sid)} ${ME.bed?'&middot; Bed '+esc(ME.bed):''}</div><p style="margin:6px 0 0">Total due: <b style="color:${due?'var(--bad)':'var(--ok)'}">Rs. ${num(due)}</b></p></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn s" onclick="portal()">Log out</button><button class="btn s o" onclick="photoCard()">My photo card</button></div></div></div>
+ ${String(ME.message||'').trim()?`<div class="card msgbox"><h3>Message from ${esc((C&&C.name)||'the hostel')}</h3><p style="margin:0">${esc(ME.message).replace(/\n/g,'<br>')}</p></div>`:''}
  <div class=card><h3 style="margin-top:0">My invoices</h3><div class=tw><table><thead><tr><th>Invoice</th><th>Month</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th></th></tr></thead><tbody>${I.map(i=>`<tr><td>${esc(i['Invoice No'])}</td><td>${esc(mt(i.Month))}</td><td>Rs. ${num(i.Total)}</td><td>Rs. ${num(i.Paid)}</td><td><b>Rs. ${num(i.Balance)}</b></td><td><span class="tag ${st(i.Status)}">${esc(i.Status)}</span></td><td>${(+i.Balance>0&&p.upi)?`<button class="btn s o" onclick="payDlg('${esc(i['Invoice No'])}',${+i.Balance})">Pay now</button>`:''}</td></tr>`).join('')||'<tr><td colspan=7>No invoices yet.</td></tr>'}</tbody></table></div>${p.upi?'':'<p class=mut>Online payment is not enabled. Please pay at the office.</p>'}</div>
  <div class=card><h3 style="margin-top:0">My payment receipts</h3><div class=tw><table><thead><tr><th>Receipt</th><th>Date</th><th>Invoice</th><th>Amount</th><th>Mode</th><th></th></tr></thead><tbody>${ME.payments.map((x,k)=>`<tr><td>${esc(x['Receipt No'])}</td><td>${fd(x.Date)}</td><td>${esc(x['Invoice No'])}</td><td>Rs. ${num(x.Amount)}</td><td>${esc(x.Mode)}</td><td><button class="btn s" onclick="rcpt(${k})">Download PDF</button></td></tr>`).join('')||'<tr><td colspan=6>No receipts yet.</td></tr>'}</tbody></table></div></div>
  ${ME.claims.length?`<div class=card><h3 style="margin-top:0">Payments I have reported</h3><div class=tw><table><thead><tr><th>Date</th><th>Invoice</th><th>Amount</th><th>UTR</th><th>Status</th></tr></thead><tbody>${ME.claims.map(c=>`<tr><td>${fd(String(c.Timestamp).slice(0,10))}</td><td>${esc(c['Invoice No'])}</td><td>Rs. ${num(c.Amount)}</td><td>${esc(c.UTR)}</td><td><span class="tag ${c.Status=='Approved'?'pd':c.Status=='Rejected'?'fu':'pn'}">${esc(c.Status)}</span></td></tr>`).join('')}</tbody></table></div></div>`:''}
  <div class=card><h3 style="margin-top:0">Service requests &amp; complaints</h3><div class=g><label>Type<select id=rq><option>Maintenance</option><option>Housekeeping</option><option>Mess / Food</option><option>Wi-Fi</option><option>Water / Electricity</option><option>Complaint</option><option>Other</option></select></label><label class=w>Describe the request<textarea id=rm></textarea></label></div><div class=err id=re></div><button class="btn o" onclick="sendR()">Submit request</button>
- <div class=tw style="margin-top:12px"><table><thead><tr><th>Date</th><th>Type</th><th>Request</th><th>Status</th><th>Reply</th></tr></thead><tbody>${ME.requests.map(r=>`<tr><td>${fd(String(r.Timestamp).slice(0,10))}</td><td>${esc(r.Type)}</td><td>${esc(r.Message)}</td><td><span class="tag ${r.Status=='Resolved'?'pd':'pn'}">${esc(r.Status)}</span></td><td>${esc(r.Reply)}</td></tr>`).join('')||'<tr><td colspan=5>No requests yet.</td></tr>'}</tbody></table></div></div>`}
+ <div class=tw style="margin-top:12px"><table><thead><tr><th>Date</th><th>Type</th><th>Request</th><th>Status</th><th>Reply</th></tr></thead><tbody>${ME.requests.map(r=>`<tr><td>${fd(String(r.Timestamp).slice(0,10))}</td><td>${esc(r.Type)}</td><td>${esc(r.Message)}</td><td><span class="tag ${r.Status=='Resolved'?'pd':'pn'}">${esc(r.Status)}</span></td><td>${esc(r.Reply)}</td></tr>`).join('')||'<tr><td colspan=5>No requests yet.</td></tr>'}</tbody></table></div></div>`;
+ loadPhoto();if(!POPDONE){POPDONE=true;setTimeout(duesPopup,500)}}
 function payDlg(inv,bal){const p=ME.pay,u=amt=>upi(p,amt,'Rent '+inv+' '+ME.sid);const m=$('#modal');
  m.innerHTML=`<div class=md><div><h3 style="margin-top:0">Pay invoice ${esc(inv)}</h3><label>Amount (Rs.)<input id=pa type=number value="${bal}"></label><div style="text-align:center;margin:12px 0" id=pq></div><a class="btn o" id=pl target="_top">Pay with UPI app</a><p class=mut>UPI ID: ${esc(p.upi)} (${esc(p.payee)}). After paying, enter the UPI reference / UTR number below so the office can verify and record it.</p><label>UPI reference / UTR number<input id=pu></label><label>Note (optional)<input id=pn></label><div class=err id=pe></div><button class="btn" onclick="claimP('${esc(inv)}')">I have paid</button> <button class="btn w" style="border:1px solid #ccc" onclick="$('#modal').innerHTML=''">Close</button></div></div>`;
  const upd=()=>{const a=$('#pa').value;$('#pq').innerHTML=qr(u(a));$('#pl').href=u(a)};$('#pa').oninput=upd;upd()}
@@ -94,11 +96,10 @@ async function engineReceipt(dbx,pid){
 async function rcpt(k){
   const x=ME.payments[k];
   try{
-    if(!KIT){const t=await run('receiptKit',TOK);KIT=t?JSON.parse(t):null}
-    if(!KIT)throw new Error('no design');
+    const KT=await getKit();if(!KT)throw new Error('no design');
     const invs=ME.invoices||[],inv=invs.find(i=>String(i['Invoice No'])===String(x['Invoice No']))||null,
       pays=ME.payments.filter(y=>inv&&String(y['Invoice No'])===String(inv['Invoice No'])||y===x);
-    const dbx={settings:KIT,students:[{id:'S',name:ME.name,bed:'B'}],beds:[{id:'B',no:ME.bed||''}],
+    const dbx={settings:KT,students:[{id:'S',name:ME.name,bed:'B'}],beds:[{id:'B',no:ME.bed||''}],
       invoices:inv?[{id:'I',no:inv['Invoice No'],month:inv.Month,total:+inv.Total||0}]:[],
       payments:pays.map(y=>({id:'P'+ME.payments.indexOf(y),no:y['Receipt No'],date:y.Date,amount:+y.Amount||0,mode:y.Mode||'',ref:y.Reference||'',invoice:inv&&String(y['Invoice No'])===String(inv['Invoice No'])?'I':'',student:'S'})),
       charges:[],claims:[],requests:[],expenses:[],n:{},users:[]};
@@ -106,6 +107,80 @@ async function rcpt(k){
     a.href=URL.createObjectURL(blob);a.download='Receipt-'+x['Receipt No']+'.pdf';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
   }catch(e){rcptBasic(k)}
 }
+/* ---- student portal: photo, message from the hostel, photo card, dues pop-ups ---- */
+(function(){const st=document.createElement('style');st.textContent=`
+.sph{width:88px;height:88px;border-radius:50%;flex:0 0 88px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--or),var(--nv));color:#fff;font:700 34px Georgia,serif;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.25)}.sph img{width:100%;height:100%;object-fit:cover}
+.msgbox{border:2px solid var(--or);background:linear-gradient(135deg,#fffbe9,#fff1f6)}.msgbox h3{margin-top:0;color:var(--nv)}
+.kpop{position:fixed;left:0;top:0;right:0;bottom:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(15,10,35,.62);padding:14px}
+.kbox{position:relative;width:100%;max-width:440px;max-height:92vh;overflow:auto;border-radius:22px;padding:26px 22px 22px;text-align:center;animation:kin .45s cubic-bezier(.2,1.3,.4,1) both}
+.kgood{background:linear-gradient(135deg,#fff7d1,#ffe0f2 45%,#dff2ff);border:3px solid transparent;background-clip:padding-box;box-shadow:0 0 0 3px #ffd43b,0 0 38px 6px rgba(255,200,60,.65),0 20px 60px rgba(60,20,120,.45)}
+.kgood h2{margin:6px 0 8px;font:800 28px Georgia,serif;background:linear-gradient(90deg,#ff4d6d,#ffb400,#22c55e,#3b82f6,#a855f7,#ff4d6d);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:kshim 3s linear infinite}
+.kgood p{font-size:16.5px;color:#3b2a57;margin:6px 0 16px}
+.kgl{position:absolute;pointer-events:none;font-size:16px;line-height:1;animation:ktw 1.6s ease-in-out infinite}
+.kbad{background:#fff;box-shadow:0 0 0 3px #e11d48,0 0 40px 8px rgba(225,29,72,.6),0 20px 60px rgba(0,0,0,.5);animation:kin .45s cubic-bezier(.2,1.3,.4,1) both,kalarm 1.1s ease-in-out infinite;padding:0}
+.kbad .kh{background:linear-gradient(135deg,#b91c1c,#ef4444);color:#fff;padding:18px 16px 14px;border-radius:19px 19px 0 0}
+.kbad .kh .ki{font-size:44px;display:inline-block;animation:kshake .7s ease-in-out infinite}
+.kbad .kh h2{margin:4px 0 0;font:800 22px Georgia,serif;letter-spacing:.02em}
+.kbad .kb{padding:16px 18px 18px}.kamt{font:800 34px Georgia,serif;color:#b91c1c;margin:2px 0 8px}
+.kbad ul{list-style:none;padding:0;margin:0 0 14px;text-align:left}.kbad li{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;margin-bottom:6px;border-radius:10px;background:#fff1f1;border:1px solid #fecaca;font-size:14px}.kbad li b{color:#b91c1c;white-space:nowrap}
+.kbtn{border:0;border-radius:999px;padding:11px 30px;font:700 15px system-ui;color:#fff;cursor:pointer;margin:3px}
+.kbtn.g{background:linear-gradient(135deg,#ff9a3c,#e8336d 55%,#7c3aed)}.kbtn.r{background:linear-gradient(135deg,#dc2626,#7f1d1d)}.kbtn.n{background:#64748b}
+@keyframes kin{0%{transform:scale(.8) translateY(14px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes kshim{0%{background-position:0 0}100%{background-position:250% 0}}
+@keyframes ktw{0%,100%{opacity:.15;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1.25) rotate(45deg)}}
+@keyframes kalarm{0%,100%{box-shadow:0 0 0 3px #e11d48,0 0 22px 4px rgba(225,29,72,.45),0 20px 60px rgba(0,0,0,.5)}50%{box-shadow:0 0 0 5px #ff2d55,0 0 52px 14px rgba(255,45,85,.8),0 20px 60px rgba(0,0,0,.5)}}
+@keyframes kshake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
+@media (prefers-reduced-motion:reduce){.kbox,.kgood h2,.kgl,.kbad,.kbad .kh .ki{animation:none!important}}
+.pcard{width:340px;max-width:100%;margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 6px 22px rgba(0,0,0,.28);background:#fff;text-align:left}
+.pcard .ph{display:flex;gap:9px;align-items:center;padding:9px 10px;color:#fff}.pcard .ph img{width:38px;height:38px;object-fit:contain;background:#fff;border-radius:6px;padding:2px}
+.pcard .pb{display:flex;gap:12px;padding:12px 12px 14px}.pcard .pp{width:92px;height:116px;flex:0 0 92px;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35);background:#e5e7eb;display:flex;align-items:center;justify-content:center;font:700 38px Georgia,serif;color:#fff;overflow:hidden}.pcard .pp img{width:100%;height:100%;object-fit:cover}
+.pcard dl{margin:0;font-size:12.5px;line-height:1.35}.pcard dt{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-top:5px}.pcard dd{margin:0;font-weight:700;color:#1d2b36;word-break:break-word}`;document.head.appendChild(st)})();
+
+let PH='',POPDONE=false;
+async function getKit(){if(KIT===null||KIT===undefined){try{const t=await run('receiptKit',TOK);KIT=t?JSON.parse(t):false}catch(e){KIT=false}}return KIT||null}
+function loadPhoto(){run('myPhoto',TOK).then(u=>{if(u&&/^data:image/.test(u)){PH=u;const e=document.getElementById('sph');if(e){e.innerHTML='';const im=new Image();im.src=u;im.alt='';e.appendChild(im)}}}).catch(()=>{})}
+function kclose(el){el.remove()}
+function duesPopup(){
+  const I=(ME&&ME.invoices)||[];if(!I.length)return;const dl=I.filter(i=>+i.Balance>0),m=document.createElement('div');m.className='kpop';
+  if(!dl.length){
+    const COL=['#ff4d6d','#ffd43b','#22c55e','#38bdf8','#a855f7','#fb923c'],gl=Array.from({length:34},(_,i)=>`<span class=kgl style="left:${(i*29+7)%96}%;top:${(i*53+11)%92}%;color:${COL[i%6]};animation-delay:${(i%11)*.17}s;font-size:${10+(i%5)*4}px">${i%3?'\u2726':'\u2728'}</span>`).join('');
+    m.innerHTML=`<div class="kbox kgood">${gl}<div style="font-size:50px;position:relative">\u{1F389}\u{1F3C6}\u{1F389}</div><h2>Congratulations!</h2><p>You have made successful payments against all the Invoices.</p><button class="kbtn g" id=kok style="position:relative">Thank you \u{1F60A}</button></div>`;
+  }else{
+    const tot=dl.reduce((a,i)=>a+(+i.Balance||0),0);
+    m.innerHTML=`<div class="kbox kbad"><div class=kh><div class=ki>\u26A0\uFE0F</div><h2>PAYMENT DUE</h2></div><div class=kb><div style="color:#6b7280;font-size:13px">Total outstanding dues</div><div class=kamt>Rs. ${num(tot)}</div><div style="text-align:left;font-weight:700;margin:0 0 6px;color:#7f1d1d">Outstanding invoice${dl.length>1?'s':''}:</div><ul>${dl.map(i=>`<li><span>${esc(i['Invoice No'])}<br><small style="color:#6b7280">${esc(mt(i.Month))}</small></span><b>Rs. ${num(i.Balance)}</b></li>`).join('')}</ul><p style="margin:0 0 12px;font-size:13.5px;color:#4b5563">Please clear the dues at the earliest.</p><button class="kbtn r" id=kview>View invoices</button><button class="kbtn n" id=kok>Close</button></div></div>`;
+  }
+  document.body.appendChild(m);
+  m.querySelector('#kok').onclick=()=>kclose(m);
+  const v=m.querySelector('#kview');if(v)v.onclick=()=>{kclose(m);const e=document.querySelector('#pbox .tw');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})};
+  m.addEventListener('click',e=>{if(e.target===m)kclose(m)});
+}
+async function photoCard(){
+  const kit=await getKit()||{},tc=(kit.tplc&&kit.tplc.adm)||{band:[20,33,61],acc:[252,163,17],page:[255,248,232]},nm=kit.name||(C&&C.name)||'',ad=kit.addr||(C&&C.address)||'',lg=kit.logo||(C&&C.logo)||'',
+    rgb=a=>'rgb('+a.join(',')+')',rows=[['Name',ME.name],['Move in date',ME.moveIn?fd(ME.moveIn):'-'],['Course',ME.course||'-'],['Institution',ME.institution||'-']],ini=esc(String(ME.name||'?').trim().charAt(0).toUpperCase());
+  const m=document.createElement('div');m.className='kpop';
+  m.innerHTML=`<div class=kbox style="background:#fff;max-width:400px;padding:18px 14px 16px"><div class=pcard id=pcd><div class=ph style="background:${rgb(tc.band)};border-bottom:3px solid ${rgb(tc.acc)}">${lg?`<img src="${esc(lg)}" alt="">`:''}<div><div style="font:700 15px Georgia,serif;line-height:1.2">${esc(nm)}</div><div style="font-size:10px;opacity:.9;line-height:1.3">${esc(ad)}</div></div></div><div class=pb style="background:${rgb(tc.page)}"><div class=pp style="background:${rgb(tc.band)}">${PH?`<img src="${PH}" alt="">`:ini}</div><dl>${rows.map(r=>`<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl></div></div><div style="margin-top:14px"><button class="kbtn g" id=kdl>Download card (PDF)</button><button class="kbtn n" id=kcl>Close</button></div></div>`;
+  document.body.appendChild(m);m.querySelector('#kcl').onclick=()=>kclose(m);m.addEventListener('click',e=>{if(e.target===m)kclose(m)});
+  m.querySelector('#kdl').onclick=()=>cardPdf(kit,tc,nm,ad,rows);
+}
+const cropPh=u=>new Promise(res=>{const im=new Image();setTimeout(()=>res(null),4000);im.onerror=()=>res(null);im.onload=()=>{try{const R=24/30.5,iw=im.width,ih=im.height;let sw=iw,sh=iw/R;if(sh>ih){sh=ih;sw=ih*R}const c=document.createElement('canvas');c.width=360;c.height=Math.round(360/R);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,(iw-sw)/2,(ih-sh)/2,sw,sh,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.9))}catch(e){res(null)}};im.src=u});
+async function cardPdf(kit,tc,nm,ad,rows){
+  try{
+    const cp=PH?await cropPh(PH):null;
+    const {jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:[85.6,54],orientation:'landscape'}),W=85.6;
+    d.setFillColor(...tc.page).rect(0,0,W,54,'F');d.setFillColor(...tc.band).rect(0,0,W,15,'F');d.setFillColor(...tc.acc).rect(0,15,W,1.2,'F');
+    let x=4;
+    if(kit.logo){try{d.setFillColor(255,255,255).roundedRect(2.5,2,11,11,1.2,1.2,'F');const ip=d.getImageProperties(kit.logo),k=Math.min(10/ip.width,10/ip.height);d.addImage(kit.logo,/png/i.test(kit.logo.slice(0,20))?'PNG':'JPEG',3+(10-ip.width*k)/2,2.5+(10-ip.height*k)/2,ip.width*k,ip.height*k);x=16}catch(e){}}
+    d.setTextColor(255,255,255).setFont('helvetica','bold').setFontSize(9.5);d.text(d.splitTextToSize(nm,W-x-3).slice(0,1),x,6.4);
+    d.setFont('helvetica','normal').setFontSize(5.2);d.text(d.splitTextToSize(ad,W-x-3).slice(0,3),x,9.6);
+    d.setFillColor(...tc.band).roundedRect(4,19.5,25,31.5,.8,.8,'F');
+    if(cp){try{d.addImage(cp,'JPEG',4.5,20,24,30.5);d.setDrawColor(255,255,255).setLineWidth(.6).rect(4,19.5,25,31.5)}catch(e){}}
+    else{d.setTextColor(255,255,255).setFont('helvetica','bold').setFontSize(22).text(String(ME.name||'?').trim().charAt(0).toUpperCase(),16.5,38,{align:'center'})}
+    let y=21.5;
+    rows.forEach(r=>{d.setFont('helvetica','normal').setFontSize(4.8).setTextColor(110,110,110).text(String(r[0]).toUpperCase(),33,y);d.setFont('helvetica','bold').setFontSize(7.4).setTextColor(30,30,30);const l=d.splitTextToSize(String(r[1]||'-'),W-37).slice(0,2);d.text(l,33,y+3.1);y+=3.1+l.length*3+1.7});
+    d.save('Photo-Card-'+String(ME.sid||'student').replace(/[^A-Za-z0-9_-]/g,'')+'.pdf');
+  }catch(e){alert('Could not make the photo card: '+(e.message||e))}
+}
+
 function portal(){ME=null;TOK='';$('#pbox').innerHTML=`<div class=card style="max-width:440px"><p>Students: log in with your Student ID and the password given to you by the hostel office. You can then see your invoices and receipts, pay rent and send requests.</p><label>Student ID<input id=ls placeholder="K-24102026-001" autocapitalize=characters autocomplete=username></label><br><label>Password<input id=lp type=password autocomplete=current-password autocapitalize=characters onkeydown="if(event.key=='Enter')doLogin()"></label><label style="display:flex;gap:6px;align-items:center;margin:8px 0"><input type=checkbox style="width:auto" onchange="$('#lp').type=this.checked?'text':'password'"> Show password</label><button class="btn o" onclick="doLogin()">Log in</button><p class=hint style="margin-top:12px">Forgot your password, or never received one? Ask the hostel office for a new password.</p><div class=err id=le></div></div>`}
 
 async function init(){

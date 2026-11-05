@@ -1463,7 +1463,45 @@ propUI=function(){const many=ROOT.props.length>1,off=b=>b.replace('<button','<bu
   document.addEventListener('mousedown',e=>{const t=e.target&&e.target.tagName;if(/^(INPUT|TEXTAREA|SELECT)$/.test(t)&&!document.hasFocus()){try{d.refocus()}catch(x){}}},true)})();
 
 /* ---- receipt design shared with the website (downloaded receipts look the same as the office's) ---- */
-function receiptKit(){const s=db.settings,k={};['name','addr','phone','logo','tpls','fz','ff','wmk','sigSz'].forEach(x=>{if(s[x]!=null)k[x]=s[x]});k.sig=s.sig&&s.sig.rec?{rec:s.sig.rec}:{};return k}
+function receiptKit(){const s=db.settings,k={};['name','addr','phone','logo','tpls','fz','ff','wmk','sigSz'].forEach(x=>{if(s[x]!=null)k[x]=s[x]});k.sig=s.sig&&s.sig.rec?{rec:s.sig.rec}:{};k.tplc={adm:tp('adm'),rec:tp('rec')};return k}
+
+/* ---- v1.23: wrapped Charges column, dashboard sync buttons, student portal message / photo / card data ---- */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'td[data-l="Charges"]{white-space:normal!important;word-break:break-word;min-width:170px;max-width:340px;line-height:1.35}'}));
+
+/* dashboard: Sync everything now / Send data to website / Fetch new submissions */
+async function dashSync(w,b){const c=pgCfg();if(!c.url||!c.key)return alert('Enter the website address and the admin key first (Settings > Cloud sync and website sync).');
+  const t=b.textContent;b.disabled=true;b.textContent='Working...';
+  try{if(w=='all')await syncAll(false);else if(w=='web')await pgPush();else await pgPull()}finally{b.disabled=false;b.textContent=t}}
+{const _v3=V.dash;V.dash=function(){let h=_v3.apply(this,arguments);const k='<div class="cards dsh">';
+  if(typeof h=='string'&&canNet()&&h.includes(k))h=h.replace(k,'<div class=ba style="margin:0 0 10px"><button type=button class=b1 onclick="dashSync(\'all\',this)">Sync everything now</button><button type=button class=b2 onclick="dashSync(\'web\',this)">Send data to website</button><button type=button class=b2 onclick="dashSync(\'fetch\',this)">Fetch new submissions</button></div>'+k);return h}}
+
+/* students: message shown on the student's portal page */
+function stuMsg(id){const s=stu(id);if(!s)return;
+  form('Message for '+s.name+' (student portal)',[['pmsg','Message shown on this student\'s portal page','area'],['pmsgOn','Show this message in the portal','sel:Yes,No']],{pmsg:s.pmsg||'',pmsgOn:s.pmsgOn===false?'No':'Yes'},v=>{
+    s.pmsg=String(v.pmsg||'').trim().slice(0,1000);s.pmsgOn=v.pmsgOn!='No';save();render();
+    const c=pgCfg();if(canNet()&&c.url&&c.key&&confirm('Message saved. Send it to the website now so the student can see it?'))pgPush()})}
+function msgBtns(){if(cur!='students')return;
+  document.querySelectorAll('#main tbody tr').forEach(tr=>{if(tr.querySelector('.msgb'))return;
+    const bs=[...tr.querySelectorAll('button')],v=bs.find(b=>/^view\('/.test(b.getAttribute('onclick')||''));if(!v)return;
+    const id=((v.getAttribute('onclick')||'').match(/view\('([^']+)'\)/)||[])[1];if(!id)return;const s=stu(id);if(!s)return;
+    const b=document.createElement('button');b.type='button';b.className='bs msgb';b.setAttribute('onclick',"stuMsg('"+id+"')");
+    b.textContent=s.pmsg&&s.pmsgOn!==false?'Message \u2713':'Message';b.title="A message shown on this student's portal page";
+    const ed=bs.find(x=>/^adm\('/.test(x.getAttribute('onclick')||''));(ed||v).after(b)})}
+{const _rm=render;render=function(){_rm.apply(this,arguments);try{msgBtns()}catch(e){}}}
+
+/* website data: message, move-in date, course, institution, student photos (small copies) */
+const phHash=u=>{let h=2166136261;for(let i=0;i<u.length;i+=7){h^=u.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+u.length};
+const TH={};let PHP=null;
+const thumbOf=u=>new Promise(res=>{const im=new Image;im.onerror=()=>res(null);im.onload=()=>{try{const k=Math.min(1,360/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82))}catch(e){res(null)}};im.src=u});
+const phSent=()=>{try{return JSON.parse(__LS.getItem('kh-ph-'+PID)||'{}')}catch(e){return {}}};
+async function prepThumbs(){const sent=phSent();for(const s of db.students){const u=s.pid&&s.pid.d;if(!u||!/^data:image/.test(u)||!s.sid)continue;const h=phHash(u);if(sent[s.sid]==h||TH[h])continue;const t=await thumbOf(u);if(t)TH[h]=t}}
+{const _wd3=webData;webData=function(){const d=_wd3.apply(this,arguments),ss=db.students.filter(s=>s.status!='Left'&&s.sid&&s.conf!==false);
+  d.students=d.students.map((r,i)=>{const s=ss[i];return s?r.slice(0,7).concat([s.pmsgOn!==false?String(s.pmsg||''):'',s.moveIn||'',s.course||'',s.inst||'']):r});
+  const sent=phSent(),next=Object.assign({},sent),photos=[];
+  ss.forEach(s=>{const u=s.pid&&s.pid.d;if(!u||!/^data:image/.test(u))return;const h=phHash(u);if(sent[s.sid]!=h&&TH[h]){photos.push({sid:s.sid,h,d:TH[h]});next[s.sid]=h}});
+  d.photos=photos;PHP=next;return d}}
+{const _pp3=pgPush;pgPush=async function(){try{await prepThumbs()}catch(e){}return _pp3.apply(this,arguments)}}
+{const _pc3=pgCall;pgCall=async function(a){const r=await _pc3.apply(this,arguments);if(a=='push'&&PHP){try{__LS.setItem('kh-ph-'+PID,JSON.stringify(PHP))}catch(e){}PHP=null}return r}}
 </script><script>
 (function(){
   function post(m){try{parent.postMessage(m,location.origin)}catch(e){}}
