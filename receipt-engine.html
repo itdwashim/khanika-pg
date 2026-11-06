@@ -100,7 +100,7 @@ return hd('Settings')+`<div class=sec><h3>Property &amp; Logo</h3><div class=g><
 ${tplUI()}<div class=sec><h3>Admission Declaration</h3><textarea style="min-height:120px" onchange="db.settings.decl=this.value;save()">${esc(s.decl)}</textarea></div>
 <div class=sec><h3>Field Categories <span class=mut style="font:12px system-ui">comma separated</span></h3><div class=g><label>Expense categories<textarea onchange="db.settings.cats=lst(this.value);save()">${esc(s.cats.join(', '))}</textarea></label><label>Payment / transaction modes<textarea onchange="db.settings.modes=lst(this.value);save()">${esc(s.modes.join(', '))}</textarea></label><label>Floors<textarea onchange="db.settings.floors=lst(this.value);save()">${esc(s.floors.join(', '))}</textarea></label><label>Room numbers<textarea onchange="db.settings.rooms=lst(this.value);save()">${esc(s.rooms.join(', '))}</textarea></label></div></div>
 <div class=sec><div class=hd><h3>Rooms &amp; Beds</h3><span><button class=b2 onclick="bedRentBulk()">Set rent in bulk</button> <button class=b1 onclick="edit('beds')">+ Add Bed</button></span></div>${tbl(db.beds,[['Bed No',b=>esc(b.no)],['Floor',b=>esc(b.floor)],['Room',b=>b.room],['Status',b=>occ(b)?'Occupied':'Vacant'],['Rent / month',b=>rentCell(b)],['Remark',b=>esc(b.remark)]],b=>bt('Edit',`edit('beds','${b.id}')`)+(occ(b)?'':bt('Delete',`del('beds','${b.id}')`,'d')))}</div>
-<div class=sec><h3>Data</h3><div class=ba><button class=b1 onclick="xl()">Export All to Excel</button><button class=b2 onclick="bk()">Backup (JSON)</button>${window.desktop&&!desktop.android?`<button class=b2 onclick="desktop.openBackups()">Open backup folder</button>`:''}<button class="b2 gdrv" onclick="gbk()">Backup to Google Drive</button><label class=ba title="Choose the backup file from Google Drive">Restore from Google Drive<input type=file accept=".json" onchange="rs(this)"></label><label class=ba>Restore backup<input type=file accept=".json" onchange="rs(this)"></label></div>${gbkInfo()}<p class=mut>Data is stored in this browser on this device. Take a backup regularly, and use Restore to move it to another device.</p></div>`}};
+<div class=sec><h3>Data</h3><div class=ba><button class=b1 onclick="xl()">Export All to Excel</button><button class=b2 onclick="bk()">Backup (JSON)</button>${window.desktop&&!desktop.android?`<button class=b2 onclick="desktop.openBackups()">Open backup folder</button>`:''}<button class="b2 gdrv" onclick="gbk()">Backup to Google Drive</button><button type=button class=b2 onclick="gbkRestore()" title="Choose one of your backups saved in Google Drive">Restore from Google Drive</button><label class=ba>Restore backup<input type=file accept=".json" onchange="rs(this)"></label></div>${gbkInfo()}<p class=mut>Data is stored in this browser on this device. Take a backup regularly, and use Restore to move it to another device.</p></div>`}};
 const lst=v=>v.split(',').map(x=>x.trim()).filter(Boolean);
 /* ---------- reports ---------- */
 const nm=id=>stu(id)?.name||'',D=(a,b)=>x=>x>=a&&x<=b;
@@ -1502,6 +1502,47 @@ async function prepThumbs(){const sent=phSent();for(const s of db.students){cons
   d.photos=photos;PHP=next;return d}}
 {const _pp3=pgPush;pgPush=async function(){try{await prepThumbs()}catch(e){}return _pp3.apply(this,arguments)}}
 {const _pc3=pgCall;pgCall=async function(a){const r=await _pc3.apply(this,arguments);if(a=='push'&&PHP){try{__LS.setItem('kh-ph-'+PID,JSON.stringify(PHP))}catch(e){}PHP=null}return r}}
+
+/* ---- v1.24: declaration sent to the website, dashboard sync status, restore straight from Google Drive ---- */
+{const _wd4=webData;webData=function(){const d=_wd4.apply(this,arguments);d.decl=String(db.settings.decl||'');return d}}
+
+const SST={busy:0,err:''},SYNACT=/^(db|pull|push)/;
+function syncBarHtml(){if(!canNet())return '';
+  const c=pgCfg(),t=__LS.getItem('kh-cs-time-'+PID),w=__LS.getItem('kh-web-time-'+PID),err=SST.err||CSERR;let st,bg,fg,ic;
+  if(!c.url||!c.key){st='Not set up';bg='#eef0f2';fg='#4b5563';ic='\u25CB'}
+  else if(SST.busy>0){st='Syncing...';bg='#e0ecff';fg='#1d4ed8';ic='\u27F3'}
+  else if(err){st='Last sync failed';bg='#fee2e2';fg='#b91c1c';ic='\u26A0'}
+  else if(t){st='Synced';bg='#dcfce7';fg='#15803d';ic='\u25CF'}
+  else{st='Not synced yet';bg='#fef3c7';fg='#b45309';ic='\u25CB'}
+  return `<div id=syncbar style="display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin:0 0 10px;padding:9px 12px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:13px"><span style="background:${bg};color:${fg};font-weight:700;border-radius:999px;padding:3px 12px">${ic} Sync status: ${st}</span><span>Last cloud sync: <b>${esc(t||'never')}</b></span><span>Last website update: <b>${esc(w||'never')}</b></span>${err&&!SST.busy&&c.url&&c.key?`<span style="flex:1 1 100%;color:#b91c1c">${esc(String(err).slice(0,200))}</span>`:''}</div>`}
+function updSync(){const e=document.getElementById('syncbar');if(e)e.outerHTML=syncBarHtml()}
+{const _pc5=pgCall;pgCall=async function(a){const sy=SYNACT.test(String(a));if(sy){SST.busy++;updSync()}
+  try{const r=await _pc5.apply(this,arguments);if(sy){SST.err='';if(a=='push'){try{__LS.setItem('kh-web-time-'+PID,new Date().toLocaleString('en-IN'))}catch(e){}}}return r}
+  catch(e){if(sy)SST.err=String(e&&e.message||e);throw e}
+  finally{if(sy){SST.busy--;updSync()}}}}
+{const _cs5=cloudSync;cloudSync=async function(){try{return await _cs5.apply(this,arguments)}finally{updSync()}}}
+{const _v5=V.dash;V.dash=function(){let h=_v5.apply(this,arguments);const k='<div class=ba style="margin:0 0 10px"><button type=button class=b1 onclick="dashSync(';
+  if(typeof h=='string'&&canNet()&&h.includes(k))h=h.replace(k,syncBarHtml()+k);return h}}
+
+function rs(i){const f=i.files[0];if(!f)return;
+  const rd=()=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result));r.onerror=()=>rej(r.error||new Error('read error'));r.readAsText(f)});
+  (f.text?f.text().catch(rd):rd()).then(t=>{let x=null;try{x=JSON.parse(t)}catch(e){}
+    if(!x||!x.students||!x.beds){alert('This file is not a valid Khanika backup.');return}
+    if(confirm('Replace all current data with this backup?')){x.users=db.users;db=x;mig();save();render()}
+  }).catch(e=>alert('Could not read the file ('+((e&&e.name)||'error')+'). If it is in Google Drive, use the "Restore from Google Drive" button, or download the file to this device first and choose it again.')).finally(()=>{try{i.value=''}catch(e){}})}
+async function gbkRestore(){const c=pgCfg();
+  if(!c.url||!c.key){if(confirm('Restoring from Google Drive needs the website address and the admin key (Settings > Cloud sync and website sync).\n\nOpen those settings now?')){cur='settings';render()}return}
+  toast('Looking for your backups in Google Drive...');
+  let L;try{L=await pgCall('driveList')}catch(e){return alert('Could not read your Google Drive backups: '+wsErr(e))}
+  if(!L||!L.length)return alert('No backup was found in the "Khanika Backups" folder of your Google Drive. Use "Backup to Google Drive" first.');
+  const m=document.createElement('div');m.className='md';
+  m.innerHTML=`<div style="background:var(--card,#fff);color:inherit;border-radius:16px;padding:18px;max-width:520px;width:94%;max-height:86vh;overflow:auto"><h3 style="margin-top:0">Restore from Google Drive</h3><p class=mut>Choose a backup. It replaces all current data on this device (the logins on this device are kept).</p>${L.map((x,i)=>`<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)"><div><b>${esc(String(x.name).replace(/^Khanika-backup-/,'').replace(/\.json$/,''))}</b><br><small class=mut>${esc(new Date(x.t).toLocaleString('en-IN'))} &middot; ${Math.max(1,Math.round(x.size/1024))} KB</small></div><button type=button class=b1 data-i="${i}">Restore</button></div>`).join('')}<div style="margin-top:10px;text-align:right"><button type=button class=b2 id=gbc>Cancel</button></div></div>`;
+  document.body.append(m);m.querySelector('#gbc').onclick=()=>m.remove();m.addEventListener('click',e=>{if(e.target===m)m.remove()});
+  m.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const x=L[+b.dataset.i];m.remove();gbkLoad(x.id,x.name)})}
+async function gbkLoad(id,name){if(!confirm('Replace all current data with the backup "'+name+'"?'))return;
+  try{let s='',n=1;for(let i=0;i<n;i++){toast('Reading the backup from Google Drive...'+(n>1?' '+(i+1)+' of '+n:''));const r=await pgCall('driveGet',{id,i});n=r.n;s+=r.data}
+    const x=JSON.parse(s);if(!x||!x.students||!x.beds)throw new Error('This file is not a valid Khanika backup.');
+    x.users=db.users;db=x;mig();save();render();alert('Restored from "'+name+'".')}catch(e){alert('Could not restore from Google Drive: '+wsErr(e))}}
 </script><script>
 (function(){
   function post(m){try{parent.postMessage(m,location.origin)}catch(e){}}
