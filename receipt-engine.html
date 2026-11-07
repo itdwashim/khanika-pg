@@ -769,7 +769,7 @@ V.website=function(){
    ${wsDiff()}<div class=mut style="margin-top:6px">Changes go live as soon as you press Save. Rooms, rent and availability are sent from Settings &gt; Cloud sync and website sync &gt; Send data to website.</div>
    <button class=b2 style="margin-top:8px" onclick="pgPush(false)">Send rooms &amp; availability to the website now</button></div>
   <div class=sec><h3>Website text</h3><div class=g>
-   <label style="grid-column:1/-1">Notice banner (shown at the top of the website, leave empty for none)<input id="w-notice" maxlength=300 value="${esc(cf.notice||'')}"></label>
+   <label style="grid-column:1/-1">Notice banner (shown at the top of the website, leave empty for none). To add a link, paste the web address, or write [label](https://link) for a clickable label.<input id="w-notice" maxlength=600 value="${esc(cf.notice||'')}"></label>
    <label>Admissions<select id="w-admissions"><option value=open ${cf.admissions!='closed'?'selected':''}>Open - show the admission form</option><option value=closed ${cf.admissions=='closed'?'selected':''}>Closed - show a message instead</option></select></label>
    ${F('name','PG name')}${F('tagline','Tagline')}${F('phone','Phone / WhatsApp')}${F('email','Email','email')}${F('startingRent','Starting rent (Rs per month)')}${F('bookingAdvance','Booking advance (Rs, blank for none)')}${F('upi','UPI ID')}${F('payee','Name on the UPI account')}
    <label style="grid-column:1/-1">Address<textarea id="w-address" rows=2>${esc(cf.address||'')}</textarea></label>
@@ -1338,9 +1338,9 @@ remAuto=function(){if(REMDONE||typeof SS=='undefined'||!SS||cur!='dash')return;R
 const DECOD={cards:'plain',lbl:'plain',cf:0,cfl:2};
 function decoCfg(){return Object.assign({},DECOD,db.settings.deco||{})}
 function decoSet(k,v){db.settings.deco=Object.assign(decoCfg(),{[k]:v});save();render()}
-const LBLP={ocean:['#0077b6','#00b4d8'],sunset:['#ff512f','#f09819'],royal:['#4b2fb8','#a044c9'],emerald:['#0f9d58','#43cea2'],rose:['#e11d48','#fb7185'],gold:['#a97c00','#f6c344'],rainbow:['#ef4444','#f59e0b','#22c55e','#3b82f6','#a855f7']};
+const LBLP={ocean:['#0b78b8'],sunset:['#e8672a'],royal:['#6a3fc4'],emerald:['#12a05f'],rose:['#e0305a'],gold:['#b8860b'],teal:['#0f8b8d'],slate:['#475569'],maroon:['#8e1c3a']};LBLP.rainbow=LBLP.royal;
 const CARDP=[['#11998e','#38ef7d'],['#ff512f','#dd2476'],['#2193b0','#6dd5ed'],['#8e2de2','#4a00e0'],['#f7971e','#d9a400'],['#cb2d3e','#ef473a'],['#134e5e','#71b280'],['#ee0979','#ff6a00']];
-const lblBg=n=>{const g=LBLP[n];return g?`linear-gradient(90deg,${g.join(',')})`:'#ddd'};
+const lblBg=n=>{const g=LBLP[n];return g?g[0]:'#ddd'};
 function decoCss(){const c=decoCfg();let css='';
   if(c.cards=='vivid')css+=CARDP.map((g,i)=>`.dsh .c:nth-child(${i+1}){background:linear-gradient(135deg,${g[0]},${g[1]});border-color:transparent;box-shadow:0 6px 16px ${g[0]}55}`).join('')+'.dsh .c small,.dsh .c b{color:#fff!important;text-shadow:0 1px 3px rgba(0,0,0,.35)}';
   if(LBLP[c.lbl]){const g=LBLP[c.lbl];css+=`#main table:not(.cards) thead th{background:${lblBg(c.lbl)}!important;color:#fff!important;border-color:transparent!important;text-shadow:0 1px 2px rgba(0,0,0,.3)}.mob table.cards td[data-l]::before{color:${g[0]}!important;font-weight:700}`}
@@ -1361,7 +1361,7 @@ function decoAuto(){if(DECODONE||typeof SS=='undefined'||!SS||cur!='dash')return
 {const _rd=render;render=function(){_rd.apply(this,arguments);try{decoApply();decoAuto()}catch(e){}}}
 function decoUI(){const c=decoCfg(),op=(k,v,t)=>`<option value="${v}" ${c[k]==v?'selected':''}>${t}</option>`,
     sp=decoSpecial(),g=LBLP[c.lbl];
-  return `<div class=sec><h3>Decorate Dashboard and Column Labels</h3><p class=mut>Make the dashboard and the table column labels colourful, and shower the screen with confetti on special days (holidays and events in your calendar list).</p><div class=g><label>Dashboard cards<select onchange="decoSet('cards',this.value)">${op('cards','plain','Plain (default)')}${op('cards','vivid','Colourful gradient cards')}</select></label><label>Column labels (table headings)<select onchange="decoSet('lbl',this.value)">${op('lbl','plain','Plain (default)')}${op('lbl','ocean','Ocean blue')}${op('lbl','sunset','Sunset orange')}${op('lbl','royal','Royal purple')}${op('lbl','emerald','Emerald green')}${op('lbl','rose','Rose red')}${op('lbl','gold','Gold')}${op('lbl','rainbow','Rainbow')}</select></label><label class=ck><input type=checkbox style="width:auto" ${c.cf?'checked':''} onchange="decoSet('cf',this.checked?1:0)"> Confetti on special days</label><label>Confetti amount<select onchange="decoSet('cfl',+this.value)">${op('cfl',1,'Light')}${op('cfl',2,'Medium')}${op('cfl',3,'Heavy')}</select></label></div>${g?`<div style="margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--line)"><div style="background:${lblBg(c.lbl)};color:#fff;padding:7px 12px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.3);display:flex;gap:30px"><span>Name</span><span>Bed</span><span>Amount</span></div></div>`:''}<p class=mut style="margin-bottom:0">${sp?'Today is <b>'+esc(sp.n)+'</b> - confetti will fall when you open the dashboard.':'Confetti falls once each time you open the dashboard on a holiday or event day.'}</p><div class=ba style="margin-top:8px"><button type=button class=b2 onclick="confettiRun(${+c.cfl||2})">Preview confetti</button></div></div>`}
+  return `<div class=sec><h3>Decorate Dashboard and Column Labels</h3><p class=mut>Make the dashboard and the table column labels colourful, and shower the screen with confetti on special days (holidays and events in your calendar list).</p><div class=g><label>Dashboard cards<select onchange="decoSet('cards',this.value)">${op('cards','plain','Plain (default)')}${op('cards','vivid','Colourful gradient cards')}</select></label><label>Column labels (table headings)<select onchange="decoSet('lbl',this.value)">${op('lbl','plain','Plain (default)')}${op('lbl','ocean','Ocean blue')}${op('lbl','sunset','Sunset orange')}${op('lbl','royal','Royal purple')}${op('lbl','emerald','Emerald green')}${op('lbl','rose','Rose red')}${op('lbl','gold','Gold')}${op('lbl','teal','Teal')}${op('lbl','slate','Slate grey')}${op('lbl','maroon','Maroon')}</select></label><label class=ck><input type=checkbox style="width:auto" ${c.cf?'checked':''} onchange="decoSet('cf',this.checked?1:0)"> Confetti on special days</label><label>Confetti amount<select onchange="decoSet('cfl',+this.value)">${op('cfl',1,'Light')}${op('cfl',2,'Medium')}${op('cfl',3,'Heavy')}</select></label></div>${g?`<div style="margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--line)"><div style="background:${lblBg(c.lbl)};color:#fff;padding:7px 12px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.3);display:flex;gap:30px"><span>Name</span><span>Bed</span><span>Amount</span></div></div>`:''}<p class=mut style="margin-bottom:0">${sp?'Today is <b>'+esc(sp.n)+'</b> - confetti will fall when you open the dashboard.':'Confetti falls once each time you open the dashboard on a holiday or event day.'}</p><div class=ba style="margin-top:8px"><button type=button class=b2 onclick="confettiRun(${+c.cfl||2})">Preview confetti</button></div></div>`}
 
 /* ---- Dashboard money cards: Times New Roman Bold figures + expenses and balance ---- */
 document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.dsh .c b{font-family:"Times New Roman",Times,serif!important;font-weight:700!important}'}));
@@ -1543,6 +1543,84 @@ async function gbkLoad(id,name){if(!confirm('Replace all current data with the b
   try{let s='',n=1;for(let i=0;i<n;i++){toast('Reading the backup from Google Drive...'+(n>1?' '+(i+1)+' of '+n:''));const r=await pgCall('driveGet',{id,i});n=r.n;s+=r.data}
     const x=JSON.parse(s);if(!x||!x.students||!x.beds)throw new Error('This file is not a valid Khanika backup.');
     x.users=db.users;db=x;mig();save();render();alert('Restored from "'+name+'".')}catch(e){alert('Could not restore from Google Drive: '+wsErr(e))}}
+
+/* ---- field names (terminology): only the words shown on screens and documents change; stored data and links never do ---- */
+var ktCfg=ktCfg||function(){return{s:'Student',p:'Students',name:''}};
+function ktOn(){var c=ktCfg();return !(c.s==='Student'&&c.p==='Students')}
+function ktCase(src,term){if(src.length>1&&src===src.toUpperCase())return term.toUpperCase();if(src.charAt(0)===src.charAt(0).toUpperCase())return term.charAt(0).toUpperCase()+term.slice(1);return term.toLowerCase()}
+function ktRep(s,c){return s.replace(/\b(an?\s+)?(students?)\b/gi,function(m,art,w){var pl=/s$/i.test(w),t=ktCase(w,pl?c.p:c.s);if(art&&!pl){var r=/^[aeiou]/i.test(t)?'an':'a';art=(art.charAt(0)==='A'?r.charAt(0).toUpperCase()+r.slice(1):r)+art.replace(/^an?/i,'')}return (art||'')+t})}
+function ktTx(str){if(typeof str!=='string'||!str||!/student/i.test(str))return str;var c=ktCfg();if(c.s==='Student'&&c.p==='Students')return str;
+  var nm=c.name;if(nm&&/student/i.test(nm)){var re=new RegExp('('+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),parts=str.split(re);return parts.map(function(x,i){return i%2===1?x:ktRep(x,c)}).join('')}
+  return ktRep(str,c)}
+var KT_ATTR=['placeholder','title','aria-label','alt'];
+function ktNode(n){
+  if(n.nodeType===3){var p=n.parentNode;if(!p)return;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|NOSCRIPT)$/.test(p.nodeName))return;if(p.nodeName==='OPTION'&&!p.hasAttribute('value'))return;
+    if(p.closest&&p.closest('[contenteditable="true"],[data-noterm]'))return;var v=n.nodeValue;if(n.__kv===v)return;var r=ktTx(v);if(r!==v){n.nodeValue=r;n.__kv=r}return}
+  if(n.nodeType!==1)return;var tg=n.nodeName;if(/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(tg)||n.hasAttribute('data-noterm')||n.getAttribute('contenteditable')==='true')return;
+  KT_ATTR.forEach(function(a){var v=n.getAttribute&&n.getAttribute(a);if(v){var r=ktTx(v);if(r!==v)n.setAttribute(a,r)}});
+  if(tg==='SELECT'){[].forEach.call(n.options,function(o){if(o.hasAttribute('value')&&o.firstChild)ktNode(o.firstChild)});return}
+  for(var c=n.firstChild;c;c=c.nextSibling)ktNode(c)}
+function ktWalk(root){try{if(ktOn()&&root)ktNode(root)}catch(e){}}
+var ktObs=null;
+function ktStart(){if(ktObs||typeof MutationObserver==='undefined')return;
+  ktObs=new MutationObserver(function(ms){if(!ktOn())return;ms.forEach(function(m){if(m.type==='childList')m.addedNodes.forEach(ktWalk);else if(m.type==='characterData')ktNode(m.target);else if(m.type==='attributes'&&m.attributeName&&m.target.getAttribute){var v=m.target.getAttribute(m.attributeName),r=ktTx(v||'');if(v&&r!==v)m.target.setAttribute(m.attributeName,r)}})});
+  ktObs.observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:KT_ATTR})}
+function ktPdf(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J||J.__kt)return;var O=J;
+  var W=function(){var d=new O(arguments[0],arguments[1],arguments[2],arguments[3]);['text','splitTextToSize','getTextWidth'].forEach(function(n){var f=d[n];if(typeof f!=='function')return;d[n]=function(t){if(typeof t==='string')arguments[0]=ktTx(t);else if(Array.isArray(t))arguments[0]=t.map(function(x){return typeof x==='string'?ktTx(x):x});return f.apply(this,arguments)}});return d};
+  Object.getOwnPropertyNames(O).forEach(function(k){try{if(!(k in W))W[k]=O[k]}catch(e){}});W.prototype=O.prototype;W.__kt=1;window.jspdf.jsPDF=W}
+['alert','confirm','prompt'].forEach(function(n){var o=window[n];if(typeof o!=='function'||o.__kt)return;var w=function(m,d){return o.call(window,ktTx(String(m==null?'':m)),d)};w.__kt=1;window[n]=w});
+
+
+/* ===== v1.25: field names (terminology), user log, card and column-label colours ===== */
+ktCfg=function(){const t=(db&&db.settings&&db.settings.term)||{};return{s:t.s||'Student',p:t.p||'Students',name:(db&&db.settings&&db.settings.name)||''}};
+ktPdf();
+if(window.XLSX&&XLSX.utils&&!XLSX.__kt){XLSX.__kt=1;const U=XLSX.utils,tx=v=>typeof v==='string'?ktTx(v):v,mr=r=>Array.isArray(r)?r.map(tx):(r&&typeof r==='object'?Object.fromEntries(Object.entries(r).map(([k,v])=>[ktTx(k),tx(v)])):tx(r));
+  ['json_to_sheet','aoa_to_sheet'].forEach(n=>{const f=U[n];if(f)U[n]=function(a,...r){return f.call(this,Array.isArray(a)?a.map(mr):a,...r)}});
+  const b=U.book_append_sheet;if(b)U.book_append_sheet=function(wb,ws,name,...r){return b.call(this,wb,ws,typeof name==='string'?ktTx(name):name,...r)}}
+{const _wo=window.open;window.open=function(u,...r){if(typeof u==='string'&&/wa\.me\/[^?]*\?text=/.test(u))u=u.replace(/(\?text=)(.*)$/,(m,a,t)=>{try{return a+encodeURIComponent(ktTx(decodeURIComponent(t)))}catch(e){return m}});return _wo.call(this,u,...r)}}
+{const _dl=dl;dl=async function(n,d){try{if(typeof d==='string'&&/\.csv$/i.test(n))d=ktTx(d);logAdd('Export / download',n)}catch(e){}return _dl.call(this,n,d)}}
+const KTP=['Student','Tenant','Boarder','Resident','Guest','Member'];
+const ktPlural=w=>{w=String(w||'').trim();if(!w)return w;return /[^aeiou]y$/i.test(w)?w.slice(0,-1)+'ies':/(s|x|ch|sh)$/i.test(w)?w+'es':w+'s'};
+function termPick(v){const a=document.getElementById('kts'),b=document.getElementById('ktp');if(a&&b&&v!='Custom'){a.value=v;b.value=ktPlural(v)}}
+function termSave(){const s=document.getElementById('kts').value.trim(),p=document.getElementById('ktp').value.trim(),ok=x=>/^[A-Za-z][A-Za-z '\-]{1,24}$/.test(x);
+  if(!ok(s)||!ok(p))return alert('Use letters only (2 to 25 characters) for both words, for example Tenant and Tenants.');
+  if(s==='Student'&&p==='Students')delete db.settings.term;else db.settings.term={s,p};
+  logAdd('Settings','Field name changed to '+s+' / '+p);save();render();ktWalk(document.body);
+  const c=pgCfg();if(canNet()&&c.url&&c.key&&confirm('Saved. Send the new wording to the website now?'))pgPush()}
+function termReset(){delete db.settings.term;logAdd('Settings','Field name reset to Student / Students');save();render()}
+function termUI(){const t=Object.assign({s:'Student',p:'Students'},db.settings.term||{}),isP=KTP.includes(t.s);
+  return `<div class=sec><h3>Field Names (Student / Tenant / Boarder ...)</h3><p class=mut>Choose the word used for the people who stay in your property. It changes on every screen, report, invoice, receipt, admission form and on the website. <b>The property name is never changed</b>, and your records, sync, backups and the website link are not affected - only the wording shown.</p><div class=g><label>Choose a word<select onchange="termPick(this.value)">${KTP.map(x=>`<option ${x==t.s?'selected':''}>${x}</option>`).join('')}<option ${isP?'':'selected'}>Custom</option></select></label><label>Singular (one person)<input id=kts value="${esc(t.s)}" maxlength=25></label><label>Plural (many)<input id=ktp value="${esc(t.p)}" maxlength=25></label></div><div class=ba style="margin-top:8px"><button type=button class=b1 onclick="termSave()">Apply</button><button type=button class=b2 onclick="termReset()">Reset to Student</button></div><p class=mut style="margin-bottom:0">After applying, press <b>Send data to website</b> so the website uses the same word. Files you already saved or printed keep their old wording.</p></div>`}
+{const _tt=tplUI;tplUI=()=>_tt()+termUI()+logUI()}
+{const _tw=webData;webData=function(){const d=_tw.apply(this,arguments),t=db.settings.term||{};d.term={s:t.s||'Student',p:t.p||'Students'};return d}}
+{const _rk=receiptKit;receiptKit=function(){const k=_rk.apply(this,arguments);if(db.settings.term)k.term=db.settings.term;return k}}
+
+/* ---- user activity log (kept on this device; the administrator can view, download and clean it) ---- */
+const logGet=()=>{try{return JSON.parse(__LS.getItem('kh-log-'+PID)||'[]')}catch(e){return[]}};
+function logAdd(a,d){try{const L=logGet(),u=(typeof cu=='function'&&cu())||null;L.push({t:Date.now(),u:u?u.name:'-',r:u?u.role:'',a:String(a),d:String(d||'').slice(0,220)});if(L.length>3000)L.splice(0,L.length-3000);__LS.setItem('kh-log-'+PID,JSON.stringify(L))}catch(e){}}
+{const _lg=login;login=function(x){const r=_lg.apply(this,arguments);logAdd('Login','');return r}}
+{const _lo=logout;logout=function(){logAdd('Logout','');return _lo.apply(this,arguments)}}
+{const _au=auth;auth=async function(e){let nm='';try{nm=document.getElementById('lu').value.trim()}catch(x){}const before=SS,r=await _au.apply(this,arguments);if(!SS||SS===before)logAdd('Failed login',nm);return r}}
+{const _fm=form;form=function(t,f,r,cb,ex){return _fm(t,f,r,v=>{const rv=cb(v);if(rv!==false){try{if(!/password/i.test(t))logAdd('Saved',t+(v&&(v.name||v.no||v.desc||v.sid)?' - '+(v.name||v.no||v.desc||v.sid):''))}catch(e){}}return rv},ex)}}
+{const _cf=window.confirm;window.confirm=function(m,...r){const ok=_cf.call(window,m,...r);if(ok){try{const s=String(m).replace(/\s+/g,' ').trim();if(/^(Delete|Remove|Replace all|Restore|Permanently|Mark|Reset|Wipe|Clear|Log out)/i.test(s))logAdd('Confirmed',s.slice(0,160))}catch(e){}}return ok};window.confirm.__kt=0}
+ui.lg=ui.lg||{u:'',q:''};
+function logFiltered(){const L=logGet().slice().reverse(),q=String(ui.lg.q||'').toLowerCase();return L.filter(x=>(!ui.lg.u||x.u==ui.lg.u)&&(!q||(x.a+' '+x.d+' '+x.u).toLowerCase().includes(q)))}
+function logSet(k,v){ui.lg[k]=v;render()}
+function logCsv(){const q=s=>'"'+String(s).replace(/"/g,'""')+'"',rows=[['Time','User','Role','Action','Details']].concat(logFiltered().map(x=>[new Date(x.t).toLocaleString('en-IN'),x.u,x.r,x.a,x.d]));dl('Khanika_user_log_'+today()+'.csv',new Blob(['\ufeff'+rows.map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv'}))}
+function logClean(){const L=logGet();if(!L.length)return alert('The log is already empty.');
+  form('Clean the user log',[['keep','What to delete','sel:Entries older than 30 days,Entries older than 90 days,Entries older than 1 year,Everything (the whole log)']],{keep:'Entries older than 90 days'},v=>{
+    const day=864e5,m=String(v.keep);let keep;if(/30 days/.test(m))keep=L.filter(x=>x.t>Date.now()-30*day);else if(/90 days/.test(m))keep=L.filter(x=>x.t>Date.now()-90*day);else if(/1 year/.test(m))keep=L.filter(x=>x.t>Date.now()-365*day);else keep=[];
+    if(!confirm('Delete '+(L.length-keep.length)+' log entr'+((L.length-keep.length)==1?'y':'ies')+'? This cannot be undone.'))return false;
+    try{__LS.setItem('kh-log-'+PID,JSON.stringify(keep))}catch(e){}logAdd('Log cleaned',(L.length-keep.length)+' entries deleted');render()})}
+function logUI(){const L=logGet(),us=[...new Set(L.map(x=>x.u))].sort(),rows=logFiltered(),shown=rows.slice(0,200);
+  return `<div class=sec><h3>User Activity Log</h3><p class=mut>Records who logged in or out, failed login attempts, records saved or deleted, exports and restores - on <b>this device</b>. ${L.length?L.length+' entries, from '+esc(new Date(L[0].t).toLocaleDateString('en-IN'))+' to '+esc(new Date(L[L.length-1].t).toLocaleDateString('en-IN'))+'.':'No entries yet.'}</p><div class=g><label>User<select onchange="logSet('u',this.value)"><option value="">All users</option>${us.map(u=>`<option ${ui.lg.u==u?'selected':''}>${esc(u)}</option>`).join('')}</select></label><label>Search<input value="${esc(ui.lg.q||'')}" placeholder="login, deleted, invoice..." onchange="logSet('q',this.value)"></label></div><div class=ba style="margin:8px 0"><button type=button class=b2 onclick="logCsv()">Download log (CSV)</button><button type=button class=b2 onclick="logClean()">Clean log...</button></div>${rows.length?tbl(shown,[['Time',x=>esc(new Date(x.t).toLocaleString('en-IN'))],['User',x=>esc(x.u)+(x.r?' <span class=mut>('+esc(x.r)+')</span>':'')],['Action',x=>esc(x.a)],['Details',x=>esc(x.d)]]):'<p class=mut>Nothing to show.</p>'}${rows.length>shown.length?`<p class=mut>Showing the latest ${shown.length} of ${rows.length}. Use the filters or download the CSV for the rest.</p>`:''}</div>`}
+
+/* ---- dashboard cards: colours for the last three cards (same style as the others) ---- */
+document.head.appendChild(Object.assign(document.createElement('style'),{textContent:
+  '.dsh .c:nth-child(6){border-color:#d6457b;background:linear-gradient(135deg,rgba(214,69,123,.24),rgba(214,69,123,.04))}'+
+  '.dsh .c:nth-child(7){border-color:#14a3a3;background:linear-gradient(135deg,rgba(20,163,163,.24),rgba(20,163,163,.04))}'+
+  '.dsh .c:nth-child(8){border-color:#5b6ee1;background:linear-gradient(135deg,rgba(91,110,225,.24),rgba(91,110,225,.04))}'}));
+
+ktStart();ktWalk(document.body);
 </script><script>
 (function(){
   function post(m){try{parent.postMessage(m,location.origin)}catch(e){}}

@@ -25,9 +25,15 @@ input,select,textarea{width:100%;margin-top:3px;padding:10px;border:1px solid #d
 .md{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:18px;z-index:30}.md>div{background:#fff;border-radius:14px;padding:18px;width:100%;max-width:440px}
 footer{background:var(--nv);color:#ddd;text-align:center;padding:22px 14px;font-size:14px}
 @media(max-width:700px){.hero>div{grid-template-columns:1fr}.g{grid-template-columns:1fr}nav a{margin-left:9px;font-size:13px}}
-#nt{display:none;background:#fff3cd;color:#14213d;font-weight:600;border-bottom:1px solid var(--ln);overflow:hidden;white-space:nowrap;padding:9px 0}
-#nt span{display:inline-block;padding-left:100%;animation:ntscroll 20s linear infinite}
+#nt{display:none;position:relative;overflow:hidden;white-space:nowrap;padding:0;color:#fff;font-weight:700;background:linear-gradient(100deg,#ff512f,#f09819,#ec4899,#8b5cf6,#3b82f6,#10b981,#ff512f);background-size:300% 100%;animation:ntbg 16s linear infinite;border-bottom:3px solid rgba(255,255,255,.55);box-shadow:0 4px 14px rgba(0,0,0,.2)}
+#nt .ntw{display:flex;align-items:center}#nt .nti{flex:0 0 auto;font-size:19px;padding:9px 14px;background:rgba(0,0,0,.28);position:relative;z-index:1;animation:ntpulse 1.8s ease-in-out infinite}
+#nt .ntm{flex:1;overflow:hidden;padding:9px 0}
+#nt span{display:inline-block;padding-left:100%;text-shadow:0 1px 3px rgba(0,0,0,.5);animation:ntscroll 20s linear infinite}
+#nt a{color:#fff;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;background:rgba(0,0,0,.25);border-radius:8px;padding:2px 9px;margin:0 3px}#nt a:hover{background:rgba(0,0,0,.45)}
 #nt:hover span{animation-play-state:paused}
+@keyframes ntbg{0%{background-position:0 0}100%{background-position:300% 0}}@keyframes ntpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.btn svg.wi{width:18px;height:18px;vertical-align:-3px;margin-right:7px}
+@media (prefers-reduced-motion:reduce){#nt,#nt .nti{animation:none}}
 @keyframes ntscroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @media(prefers-reduced-motion:reduce){#nt{white-space:normal;text-align:center;padding:9px 14px}#nt span{animation:none;padding-left:0}}
 .cl{background:#fdecea;border:1px solid #f5c6c0;border-radius:12px;padding:16px;font-weight:600}
@@ -35,12 +41,40 @@ footer{background:var(--nv);color:#ddd;text-align:center;padding:22px 14px;font-
 </style>
 <script src="config.js"></script>
 <script>
+function linkify(t){return esc(t).replace(/\[([^\]]{1,80})\]\(((?:https?:\/\/|mailto:|tel:)[^)\s]+)\)|((?:https?:\/\/|www\.)[^\s<]*[^\s<.,;:!?)\]'"])/gi,function(m,a,u,b){if(a)return '<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+a+'</a>';var h=/^www\./i.test(b)?'https://'+b:b;return '<a href="'+h+'" target="_blank" rel="noopener noreferrer">'+b+'</a>'})}
+/* ---- field names (terminology): only the words shown on screens and documents change; stored data and links never do ---- */
+var ktCfg=ktCfg||function(){return{s:'Student',p:'Students',name:''}};
+function ktOn(){var c=ktCfg();return !(c.s==='Student'&&c.p==='Students')}
+function ktCase(src,term){if(src.length>1&&src===src.toUpperCase())return term.toUpperCase();if(src.charAt(0)===src.charAt(0).toUpperCase())return term.charAt(0).toUpperCase()+term.slice(1);return term.toLowerCase()}
+function ktRep(s,c){return s.replace(/\b(an?\s+)?(students?)\b/gi,function(m,art,w){var pl=/s$/i.test(w),t=ktCase(w,pl?c.p:c.s);if(art&&!pl){var r=/^[aeiou]/i.test(t)?'an':'a';art=(art.charAt(0)==='A'?r.charAt(0).toUpperCase()+r.slice(1):r)+art.replace(/^an?/i,'')}return (art||'')+t})}
+function ktTx(str){if(typeof str!=='string'||!str||!/student/i.test(str))return str;var c=ktCfg();if(c.s==='Student'&&c.p==='Students')return str;
+  var nm=c.name;if(nm&&/student/i.test(nm)){var re=new RegExp('('+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),parts=str.split(re);return parts.map(function(x,i){return i%2===1?x:ktRep(x,c)}).join('')}
+  return ktRep(str,c)}
+var KT_ATTR=['placeholder','title','aria-label','alt'];
+function ktNode(n){
+  if(n.nodeType===3){var p=n.parentNode;if(!p)return;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|NOSCRIPT)$/.test(p.nodeName))return;if(p.nodeName==='OPTION'&&!p.hasAttribute('value'))return;
+    if(p.closest&&p.closest('[contenteditable="true"],[data-noterm]'))return;var v=n.nodeValue;if(n.__kv===v)return;var r=ktTx(v);if(r!==v){n.nodeValue=r;n.__kv=r}return}
+  if(n.nodeType!==1)return;var tg=n.nodeName;if(/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(tg)||n.hasAttribute('data-noterm')||n.getAttribute('contenteditable')==='true')return;
+  KT_ATTR.forEach(function(a){var v=n.getAttribute&&n.getAttribute(a);if(v){var r=ktTx(v);if(r!==v)n.setAttribute(a,r)}});
+  if(tg==='SELECT'){[].forEach.call(n.options,function(o){if(o.hasAttribute('value')&&o.firstChild)ktNode(o.firstChild)});return}
+  for(var c=n.firstChild;c;c=c.nextSibling)ktNode(c)}
+function ktWalk(root){try{if(ktOn()&&root)ktNode(root)}catch(e){}}
+var ktObs=null;
+function ktStart(){if(ktObs||typeof MutationObserver==='undefined')return;
+  ktObs=new MutationObserver(function(ms){if(!ktOn())return;ms.forEach(function(m){if(m.type==='childList')m.addedNodes.forEach(ktWalk);else if(m.type==='characterData')ktNode(m.target);else if(m.type==='attributes'&&m.attributeName&&m.target.getAttribute){var v=m.target.getAttribute(m.attributeName),r=ktTx(v||'');if(v&&r!==v)m.target.setAttribute(m.attributeName,r)}})});
+  ktObs.observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:KT_ATTR})}
+function ktPdf(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J||J.__kt)return;var O=J;
+  var W=function(){var d=new O(arguments[0],arguments[1],arguments[2],arguments[3]);['text','splitTextToSize','getTextWidth'].forEach(function(n){var f=d[n];if(typeof f!=='function')return;d[n]=function(t){if(typeof t==='string')arguments[0]=ktTx(t);else if(Array.isArray(t))arguments[0]=t.map(function(x){return typeof x==='string'?ktTx(x):x});return f.apply(this,arguments)}});return d};
+  Object.getOwnPropertyNames(O).forEach(function(k){try{if(!(k in W))W[k]=O[k]}catch(e){}});W.prototype=O.prototype;W.__kt=1;window.jspdf.jsPDF=W}
+['alert','confirm','prompt'].forEach(function(n){var o=window[n];if(typeof o!=='function'||o.__kt)return;var w=function(m,d){return o.call(window,ktTx(String(m==null?'':m)),d)};w.__kt=1;window[n]=w});
+
+function ktInit(){ktCfg=function(){var t=(window.C&&C.term)||{};return{s:t.s||'Student',p:t.p||'Students',name:(window.C&&C.name)||''}};ktPdf();ktStart();ktWalk(document.body)}
 async function api(action,body){const u=window.KHANIKA_API;if(!u||/PASTE/.test(u))throw new Error('The website address is not set yet. Open config.js and paste your Google web app address.');const r=await fetch(u,{method:'POST',body:JSON.stringify(Object.assign({action},body))});const j=await r.json();if(!j.ok)throw new Error(j.error||'Request failed');return j.result}
 window.PORTAL_URL='portal.html';
 </script></head><body>
 <header><div class="brand"><img id="hlogo" alt=""><b id="hn">Khanika Student PG</b><svg id="wflag" viewBox="0 0 120 80" width="54" height="36" aria-label="Indian flag"><rect x="2" y="2" width="3" height="78" rx="1.5" fill="#c9a24a"/><circle cx="3.5" cy="2" r="3" fill="#f2c94c"/><path id="wf0" fill="#FF9933"/><path id="wf1" fill="#fff" stroke="#ddd" stroke-width=".3"/><path id="wf2" fill="#138808"/><g id="wfc" transform="translate(60,30)" stroke="#000080" stroke-width=".6" fill="none"><circle r="7.5"/><line x1="0" y1="0" x2="7.00" y2="0.00"/><line x1="0" y1="0" x2="6.76" y2="1.81"/><line x1="0" y1="0" x2="6.06" y2="3.50"/><line x1="0" y1="0" x2="4.95" y2="4.95"/><line x1="0" y1="0" x2="3.50" y2="6.06"/><line x1="0" y1="0" x2="1.81" y2="6.76"/><line x1="0" y1="0" x2="0.00" y2="7.00"/><line x1="0" y1="0" x2="-1.81" y2="6.76"/><line x1="0" y1="0" x2="-3.50" y2="6.06"/><line x1="0" y1="0" x2="-4.95" y2="4.95"/><line x1="0" y1="0" x2="-6.06" y2="3.50"/><line x1="0" y1="0" x2="-6.76" y2="1.81"/><line x1="0" y1="0" x2="-7.00" y2="0.00"/><line x1="0" y1="0" x2="-6.76" y2="-1.81"/><line x1="0" y1="0" x2="-6.06" y2="-3.50"/><line x1="0" y1="0" x2="-4.95" y2="-4.95"/><line x1="0" y1="0" x2="-3.50" y2="-6.06"/><line x1="0" y1="0" x2="-1.81" y2="-6.76"/><line x1="0" y1="0" x2="-0.00" y2="-7.00"/><line x1="0" y1="0" x2="1.81" y2="-6.76"/><line x1="0" y1="0" x2="3.50" y2="-6.06"/><line x1="0" y1="0" x2="4.95" y2="-4.95"/><line x1="0" y1="0" x2="6.06" y2="-3.50"/><line x1="0" y1="0" x2="6.76" y2="-1.81"/><circle r="1.4" fill="#000080"/></g></svg></div><nav><a id="nr" href="#rooms">Rooms &amp; Rent</a><a id="ng" href="#gallery">Gallery</a><a id="nv" href="#videos" style="display:none">Videos</a><a href="#apply">Apply</a><a id="pl" href="#">Student Login</a></nav></header><div id="nt"></div>
 <div class="hero noimg"><div><div><h1 id="tag">Student PG, made easy.</h1><p id="addr" style="font-weight:600"></p><p id="starts" style="font-size:20px;font-weight:700"></p>
-<a class="btn" href="#apply">Apply for a room</a> <a class="btn w" id="pl2" href="#">Student login</a> <a class="btn w" id="call" href="#">Call / WhatsApp</a></div><img id="adimg" alt="" style="display:none"></div></div>
+<a class="btn" href="#apply">Apply for a room</a> <a class="btn w" id="pl2" href="#">Student login</a> <a class="btn w" id="call" href="#"><svg class="wi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#25D366" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>WhatsApp Us</a></div><img id="adimg" alt="" style="display:none"></div></div>
 <section id="about"><h2>About the PG</h2><p id="about-t"></p><div class="chips" id="am"></div></section>
 <section id="rooms"><h2>Rooms, rent &amp; availability</h2><div class="tw"><table id="rtab"><thead><tr><th>Room</th><th>Floor</th><th class="cr">Rent (per bed / month)</th><th class="ca">Availability</th></tr></thead><tbody id="rt"></tbody></table></div><p class="mut" id="rn"></p></section>
 <section id="gallery"><h2>Photo gallery</h2><div class="gal" id="gal"></div></section>
@@ -66,17 +100,17 @@ let C={},GAL=[];
 const gal=()=>{$('#gal').innerHTML=GAL.map((g,i)=>`<figure onclick="lb(${i})"><img src="${g.t||g.s}" alt="${esc(g.c)}"><figcaption>${esc(g.c)}</figcaption></figure>`).join('')};
 async function init(){
  loadTheme();$('#gallery').style.display='none';$('#ng').style.display='none';
- try{C=await run('getPublic')}catch(e){$('#appbox').innerHTML='<p class=err>Could not load the page data: '+esc(em(e))+'</p>';return}
+ try{C=await run('getPublic');ktInit()}catch(e){$('#appbox').innerHTML='<p class=err>Could not load the page data: '+esc(em(e))+'</p>';return}
  applyTheme(C);saveTheme();
  document.title=C.name;$('#hn').textContent=C.name;{var hl=$('#hlogo');if(C.logo){hl.onerror=function(){hl.style.display='none'};hl.src=C.logo;hl.style.display='block'}else hl.style.display='none'}$('#tag').textContent=C.tagline||'';$('#addr').textContent=C.address||'';
  $('#starts').textContent=(C.startingRent&&C.showRent!==false)?'Starting at Rs. '+num(C.startingRent)+' per month':'';$('#about-t').textContent=C.about||'';
  $('#am').innerHTML=C.amenities.map(a=>`<span class=chip>${esc(a)}</span>`).join('');
- const ph=(C.phone||'').replace(/\D/g,'');$('#call').href='https://wa.me/'+(ph.length==10?'91'+ph:ph);$('#call').textContent='WhatsApp '+C.phone;
+ const ph=(C.phone||'').replace(/\D/g,'');$('#call').href='https://wa.me/'+(ph.length==10?'91'+ph:ph);
  $('#foot').innerHTML=esc(C.name)+' &middot; '+esc(C.address)+' &middot; Call/WhatsApp '+esc(C.phone)+(C.email?' &middot; <a href="mailto:'+esc(C.email)+'">'+esc(C.email)+'</a>':'')+(/^https:\/\//.test(C.mapUrl||'')?' &middot; <a href="'+esc(C.mapUrl)+'" target="_blank" rel="noopener">Find us on the map</a>':'');
- if(C.notice){const n=$('#nt');n.innerHTML='<span></span>';const sp=n.firstChild;sp.textContent=C.notice;n.style.display='block';sp.style.animationDuration=Math.max(10,sp.offsetWidth/80)+'s'}
+ if(C.notice){const n=$('#nt');n.innerHTML='<div class=ntw><b class=nti>\u{1F4E2}</b><div class=ntm><span></span></div></div>';const sp=n.querySelector('span');sp.innerHTML=linkify(C.notice);n.style.display='block';sp.style.animationDuration=Math.max(12,sp.offsetWidth/70)+'s'}
  GAL=C.gallery||[];gal();{const has=GAL.length>0;$('#gallery').style.display=has?'':'none';$('#ng').style.display=has?'':'none'}
  vids();
- {const ai=$('#adimg'),hero=document.querySelector('.hero');if(C.flyer){ai.onerror=()=>{ai.style.display='none';hero.classList.add('noimg')};ai.onload=()=>{ai.style.display='block';hero.classList.remove('noimg')};ai.src=C.flyer}}
+ {const ai=$('#adimg'),hero=document.querySelector('.hero');ai.removeAttribute('src');ai.style.display='none';hero.classList.add('noimg');if(C.flyer){const go=()=>{ai.onerror=()=>{ai.removeAttribute('src');ai.style.display='none';hero.classList.add('noimg')};ai.onload=()=>{ai.style.opacity=0;ai.style.display='block';hero.classList.remove('noimg');ai.style.transition='opacity .6s';requestAnimationFrame(()=>{ai.style.opacity=1})};ai.src=C.flyer};if(document.readyState==='complete')go();else addEventListener('load',go,{once:true})}}
  $('#rt').innerHTML=C.rooms.length?C.rooms.map(r=>{const v=+r['Vacant Beds'];return `<tr><td>${esc(r.Room)}</td><td>${esc(r.Floor)}</td><td class=cr>Rs. ${num(r['Rent (Rs/month)'])}</td><td class=ca>${isNaN(v)?'<span class=mut>Call to check</span>':v>0?`<span class="tag av">${v} bed${v>1?'s':''} available</span>`:'<span class="tag fu">Full</span>'}</td></tr>`}).join(''):'<tr><td colspan=4>Please call us for availability.</td></tr>';
  $('#rn').textContent=C.showAvail===false?'':'Availability is updated by the PG office and may change during the day.';
  $('#rtab').classList.toggle('hr',C.showRent===false);$('#rtab').classList.toggle('ha',C.showAvail===false);

@@ -41,6 +41,33 @@ window.SITE_HOME='index.html';
 <section id="portal"><h2>Student portal</h2><div id="pbox"></div></section>
 <footer id="foot"></footer><div id="modal"></div>
 <script>
+/* ---- field names (terminology): only the words shown on screens and documents change; stored data and links never do ---- */
+var ktCfg=ktCfg||function(){return{s:'Student',p:'Students',name:''}};
+function ktOn(){var c=ktCfg();return !(c.s==='Student'&&c.p==='Students')}
+function ktCase(src,term){if(src.length>1&&src===src.toUpperCase())return term.toUpperCase();if(src.charAt(0)===src.charAt(0).toUpperCase())return term.charAt(0).toUpperCase()+term.slice(1);return term.toLowerCase()}
+function ktRep(s,c){return s.replace(/\b(an?\s+)?(students?)\b/gi,function(m,art,w){var pl=/s$/i.test(w),t=ktCase(w,pl?c.p:c.s);if(art&&!pl){var r=/^[aeiou]/i.test(t)?'an':'a';art=(art.charAt(0)==='A'?r.charAt(0).toUpperCase()+r.slice(1):r)+art.replace(/^an?/i,'')}return (art||'')+t})}
+function ktTx(str){if(typeof str!=='string'||!str||!/student/i.test(str))return str;var c=ktCfg();if(c.s==='Student'&&c.p==='Students')return str;
+  var nm=c.name;if(nm&&/student/i.test(nm)){var re=new RegExp('('+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),parts=str.split(re);return parts.map(function(x,i){return i%2===1?x:ktRep(x,c)}).join('')}
+  return ktRep(str,c)}
+var KT_ATTR=['placeholder','title','aria-label','alt'];
+function ktNode(n){
+  if(n.nodeType===3){var p=n.parentNode;if(!p)return;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|NOSCRIPT)$/.test(p.nodeName))return;if(p.nodeName==='OPTION'&&!p.hasAttribute('value'))return;
+    if(p.closest&&p.closest('[contenteditable="true"],[data-noterm]'))return;var v=n.nodeValue;if(n.__kv===v)return;var r=ktTx(v);if(r!==v){n.nodeValue=r;n.__kv=r}return}
+  if(n.nodeType!==1)return;var tg=n.nodeName;if(/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(tg)||n.hasAttribute('data-noterm')||n.getAttribute('contenteditable')==='true')return;
+  KT_ATTR.forEach(function(a){var v=n.getAttribute&&n.getAttribute(a);if(v){var r=ktTx(v);if(r!==v)n.setAttribute(a,r)}});
+  if(tg==='SELECT'){[].forEach.call(n.options,function(o){if(o.hasAttribute('value')&&o.firstChild)ktNode(o.firstChild)});return}
+  for(var c=n.firstChild;c;c=c.nextSibling)ktNode(c)}
+function ktWalk(root){try{if(ktOn()&&root)ktNode(root)}catch(e){}}
+var ktObs=null;
+function ktStart(){if(ktObs||typeof MutationObserver==='undefined')return;
+  ktObs=new MutationObserver(function(ms){if(!ktOn())return;ms.forEach(function(m){if(m.type==='childList')m.addedNodes.forEach(ktWalk);else if(m.type==='characterData')ktNode(m.target);else if(m.type==='attributes'&&m.attributeName&&m.target.getAttribute){var v=m.target.getAttribute(m.attributeName),r=ktTx(v||'');if(v&&r!==v)m.target.setAttribute(m.attributeName,r)}})});
+  ktObs.observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:KT_ATTR})}
+function ktPdf(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J||J.__kt)return;var O=J;
+  var W=function(){var d=new O(arguments[0],arguments[1],arguments[2],arguments[3]);['text','splitTextToSize','getTextWidth'].forEach(function(n){var f=d[n];if(typeof f!=='function')return;d[n]=function(t){if(typeof t==='string')arguments[0]=ktTx(t);else if(Array.isArray(t))arguments[0]=t.map(function(x){return typeof x==='string'?ktTx(x):x});return f.apply(this,arguments)}});return d};
+  Object.getOwnPropertyNames(O).forEach(function(k){try{if(!(k in W))W[k]=O[k]}catch(e){}});W.prototype=O.prototype;W.__kt=1;window.jspdf.jsPDF=W}
+['alert','confirm','prompt'].forEach(function(n){var o=window[n];if(typeof o!=='function'||o.__kt)return;var w=function(m,d){return o.call(window,ktTx(String(m==null?'':m)),d)};w.__kt=1;window[n]=w});
+
+function ktInit(){ktCfg=function(){var t=(window.C&&C.term)||{};return{s:t.s||'Student',p:t.p||'Students',name:(window.C&&C.name)||''}};ktPdf();ktStart();ktWalk(document.body)}
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
 run=(f,...a)=>api('rpc',{fn:f,args:a}),
 em=e=>String((e&&e.message)||e).replace(/^Error:\s*/,''),num=n=>Number(n||0).toLocaleString('en-IN'),
@@ -155,44 +182,39 @@ function duesPopup(){
   const v=m.querySelector('#kview');if(v)v.onclick=()=>{kclose(m);const e=document.querySelector('#pbox .tw');if(e)e.scrollIntoView({behavior:'smooth',block:'center'})};
   m.addEventListener('click',e=>{if(e.target===m)kclose(m)});
 }
-(function(){const st=document.createElement('style');st.textContent=`.pcard .pq{display:flex;gap:12px;align-items:center;padding:0 12px 12px}.pcard .qr{width:80px;height:80px;flex:0 0 80px;background:#fff;padding:4px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.25)}.pcard .bc{flex:1;min-width:0;text-align:center}.pcard .qr svg{display:block;width:100%;height:100%}.pcard .bc svg{display:block;width:100%;height:46px;background:#fff;padding:4px 6px;border-radius:6px;box-sizing:border-box}.pcard .bid{font:700 12px/1.2 monospace;margin-top:3px;color:#1d2b36}.pcard .bcap{font-size:10px;color:#6b7280}`;document.head.appendChild(st)})();
-const asc=t=>String(t||'').normalize('NFKD').replace(/[^\x20-\x7E\n]/g,'');
-const cardText=(nm,rows)=>[asc(nm)].concat(rows.map(r=>asc(r[0])+': '+asc(r[1]||'-')),['ID: '+asc(ME.sid)]).join('\n');
-function cardQr(txt){try{const q=qrcode(0,'M');q.addData(txt);q.make();return q}catch(e){return null}}
+(function(){const st=document.createElement('style');st.textContent=`.pcard .rib{padding:8px 12px 9px}.pcard .rib .bw{background:#fff;border-radius:6px;padding:5px 10px}.pcard .rib svg{display:block;width:100%;height:30px}`;document.head.appendChild(st)})();
 function cardBits(id){try{if(typeof JsBarcode!=='function')return null;const o={};JsBarcode(o,String(id),{format:'CODE128',displayValue:false});return o.encodings&&o.encodings[0]?o.encodings[0].data:null}catch(e){return null}}
-function qrSvg(q){const n=q.getModuleCount();let p='';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))p+='M'+c+' '+r+'h1v1h-1z';return `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" aria-label="QR code with the student details"><path d="${p}" fill="#141414"/></svg>`}
 function barSvg(b){let p='',i=0;while(i<b.length){if(b[i]==='1'){let j=i;while(j<b.length&&b[j]==='1')j++;p+='M'+i+' 0h'+(j-i)+'v1h-'+(j-i)+'z';i=j}else i++}return `<svg viewBox="0 0 ${b.length} 1" preserveAspectRatio="none" shape-rendering="crispEdges" aria-label="Barcode of the student ID"><path d="${p}" fill="#000"/></svg>`}
 async function photoCard(){
   const kit=await getKit()||{},tc=(kit.tplc&&kit.tplc.adm)||{band:[20,33,61],acc:[252,163,17],page:[255,248,232]},nm=kit.name||(C&&C.name)||'',ad=kit.addr||(C&&C.address)||'',lg=kit.logo||(C&&C.logo)||'',
-    rgb=a=>'rgb('+a.join(',')+')',rows=[['Name',ME.name],['Move in date',ME.moveIn?fd(ME.moveIn):'-'],['Course',ME.course||'-'],['Institution',ME.institution||'-']],ini=esc(String(ME.name||'?').trim().charAt(0).toUpperCase()),
-    q=cardQr(cardText(nm,rows)),bits=cardBits(ME.sid);
+    rgb=a=>'rgb('+a.join(',')+')',rows=[['Name',ME.name],['Student ID',ME.sid],['Move in date',ME.moveIn?fd(ME.moveIn):'-'],['Course',ME.course||'-'],['Institution',ME.institution||'-']],ini=esc(String(ME.name||'?').trim().charAt(0).toUpperCase()),bits=cardBits(ME.sid);
   const m=document.createElement('div');m.className='kpop';
-  m.innerHTML=`<div class=kbox style="background:#fff;max-width:400px;padding:18px 14px 16px"><div class=pcard id=pcd><div class=ph style="background:${rgb(tc.band)};border-bottom:3px solid ${rgb(tc.acc)}">${lg?`<img src="${esc(lg)}" alt="">`:''}<div><div style="font:700 15px Georgia,serif;line-height:1.2">${esc(nm)}</div><div style="font-size:10px;opacity:.9;line-height:1.3">${esc(ad)}</div></div></div><div class=pb style="background:${rgb(tc.page)}"><div class=pp style="background:${rgb(tc.band)}">${PH?`<img src="${PH}" alt="">`:ini}</div><dl>${rows.map(r=>`<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl></div><div class=pq style="background:${rgb(tc.page)}">${q?`<div class=qr>${qrSvg(q)}</div>`:''}<div class=bc>${bits?barSvg(bits):''}<div class=bid>${esc(ME.sid)}</div><div class=bcap>Scan the QR code for student details</div></div></div></div><div style="margin-top:14px"><button class="kbtn g" id=kdl>Download card (PDF)</button><button class="kbtn n" id=kcl>Close</button></div></div>`;
+  m.innerHTML=`<div class=kbox style="background:#fff;max-width:400px;padding:18px 14px 16px"><div class=pcard id=pcd><div class=ph style="background:${rgb(tc.band)};border-bottom:3px solid ${rgb(tc.acc)}">${lg?`<img src="${esc(lg)}" alt="">`:''}<div><div style="font:700 15px Georgia,serif;line-height:1.2">${esc(nm)}</div><div style="font-size:10px;opacity:.9;line-height:1.3">${esc(ad)}</div></div></div><div class=pb style="background:${rgb(tc.page)}"><div class=pp style="background:${rgb(tc.band)}">${PH?`<img src="${PH}" alt="">`:ini}</div><dl>${rows.map(r=>`<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl></div>${bits?`<div class=rib style="background:${rgb(tc.band)};border-top:3px solid ${rgb(tc.acc)}"><div class=bw>${barSvg(bits)}</div></div>`:''}</div><div style="margin-top:14px"><button class="kbtn g" id=kdl>Download card (PDF)</button><button class="kbtn n" id=kcl>Close</button></div></div>`;
   document.body.appendChild(m);m.querySelector('#kcl').onclick=()=>kclose(m);m.addEventListener('click',e=>{if(e.target===m)kclose(m)});
-  m.querySelector('#kdl').onclick=()=>cardPdf(kit,tc,nm,ad,rows,q,bits);
+  m.querySelector('#kdl').onclick=()=>cardPdf(kit,tc,nm,ad,rows,bits);
 }
-const cropPh=u=>new Promise(res=>{const im=new Image();setTimeout(()=>res(null),4000);im.onerror=()=>res(null);im.onload=()=>{try{const R=24/30.5,iw=im.width,ih=im.height;let sw=iw,sh=iw/R;if(sh>ih){sh=ih;sw=ih*R}const c=document.createElement('canvas');c.width=360;c.height=Math.round(360/R);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,(iw-sw)/2,(ih-sh)/2,sw,sh,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.9))}catch(e){res(null)}};im.src=u});
-async function cardPdf(kit,tc,nm,ad,rows,q,bits){
+const cropPh=u=>new Promise(res=>{const im=new Image();setTimeout(()=>res(null),4000);im.onerror=()=>res(null);im.onload=()=>{try{const R=21.5/27.4,iw=im.width,ih=im.height;let sw=iw,sh=iw/R;if(sh>ih){sh=ih;sw=ih*R}const c=document.createElement('canvas');c.width=360;c.height=Math.round(360/R);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,(iw-sw)/2,(ih-sh)/2,sw,sh,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.9))}catch(e){res(null)}};im.src=u});
+async function cardPdf(kit,tc,nm,ad,rows,bits){
   try{
     const cp=PH?await cropPh(PH):null;
-    const {jsPDF}=window.jspdf,W=85.6,H=74,d=new jsPDF({unit:'mm',format:[W,H],orientation:'landscape'});
+    const {jsPDF}=window.jspdf,W=85.6,H=54,d=new jsPDF({unit:'mm',format:[W,H],orientation:'landscape'});
     d.setFillColor(...tc.page).rect(0,0,W,H,'F');d.setFillColor(...tc.band).rect(0,0,W,15,'F');d.setFillColor(...tc.acc).rect(0,15,W,1.2,'F');
     let x=4;
     if(kit.logo){try{d.setFillColor(255,255,255).roundedRect(2.5,2,11,11,1.2,1.2,'F');const ip=d.getImageProperties(kit.logo),k=Math.min(10/ip.width,10/ip.height);d.addImage(kit.logo,/png/i.test(kit.logo.slice(0,20))?'PNG':'JPEG',3+(10-ip.width*k)/2,2.5+(10-ip.height*k)/2,ip.width*k,ip.height*k);x=16}catch(e){}}
     d.setTextColor(255,255,255).setFont('helvetica','bold').setFontSize(9.5);d.text(d.splitTextToSize(nm,W-x-3).slice(0,1),x,6.4);
     d.setFont('helvetica','normal').setFontSize(5.2);d.text(d.splitTextToSize(ad,W-x-3).slice(0,3),x,9.6);
-    d.setFillColor(...tc.band).roundedRect(4,19.5,25,31.5,.8,.8,'F');
-    if(cp){try{d.addImage(cp,'JPEG',4.5,20,24,30.5);d.setDrawColor(255,255,255).setLineWidth(.6).rect(4,19.5,25,31.5)}catch(e){}}
-    else{d.setTextColor(255,255,255).setFont('helvetica','bold').setFontSize(22).text(String(ME.name||'?').trim().charAt(0).toUpperCase(),16.5,38,{align:'center'})}
-    let y=21.5;
-    rows.forEach(r=>{d.setFont('helvetica','normal').setFontSize(4.8).setTextColor(110,110,110).text(String(r[0]).toUpperCase(),33,y);d.setFont('helvetica','bold').setFontSize(7.4).setTextColor(30,30,30);const l=d.splitTextToSize(String(r[1]||'-'),W-37).slice(0,2);d.text(l,33,y+3.1);y+=3.1+l.length*3+1.7});
-    /* barcode strip: QR code with the student details + barcode of the student ID */
-    d.setDrawColor(...tc.acc).setLineWidth(.3).line(4,53.4,W-4,53.4);
-    if(q){const n=q.getModuleCount(),sz=15.5,mod=sz/n,x0=5,y0=55.6;d.setFillColor(255,255,255).roundedRect(x0-1,y0-1,sz+2,sz+2,1,1,'F');d.setFillColor(20,20,20);for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d.rect(x0+c*mod,y0+r*mod,mod+.015,mod+.015,'F')}
-    const bx=25,bw=56;
-    if(bits){const mod=bw/bits.length;d.setFillColor(255,255,255).roundedRect(bx-1.5,54.6,bw+3,12.4,1,1,'F');d.setFillColor(0,0,0);let i=0;while(i<bits.length){if(bits[i]==='1'){let j=i;while(j<bits.length&&bits[j]==='1')j++;d.rect(bx+i*mod,55.6,(j-i)*mod,8.6,'F');i=j}else i++}}
-    d.setFont('courier','bold').setFontSize(6.5).setTextColor(30,30,30).text(String(ME.sid||''),bx+bw/2,bits?69.4:62,{align:'center'});
-    d.setFont('helvetica','normal').setFontSize(4.2).setTextColor(110,110,110).text('Scan the QR code for student details',bx+bw/2,bits?71.3:65,{align:'center'});
+    const px=4,py=17.8,pw=21.5,ph=27.4;
+    d.setFillColor(...tc.band).roundedRect(px,py,pw,ph,.8,.8,'F');
+    if(cp){try{d.addImage(cp,'JPEG',px+.4,py+.4,pw-.8,ph-.8);d.setDrawColor(255,255,255).setLineWidth(.6).rect(px,py,pw,ph)}catch(e){}}
+    else{d.setTextColor(255,255,255).setFont('helvetica','bold').setFontSize(20).text(String(ME.name||'?').trim().charAt(0).toUpperCase(),px+pw/2,py+ph/2+3,{align:'center'})}
+    const tx=29.5,aw=W-tx-3;let y=19.4;
+    rows.forEach((r,i)=>{d.setFont('helvetica','normal').setFontSize(4.3).setTextColor(110,110,110).text(String(r[0]).toUpperCase(),tx,y);
+      d.setFont('helvetica','bold').setTextColor(30,30,30);let v=String(r[1]||'-'),fs=7.2,lines;
+      if(i===4){fs=6.4;d.setFontSize(fs);lines=d.splitTextToSize(v,aw).slice(0,2)}else{d.setFontSize(fs);while(fs>5&&d.getTextWidth(v)>aw){fs-=.2;d.setFontSize(fs)}lines=[v]}
+      d.text(lines,tx,y+2.8);y+=5.1});
+    /* slim coloured ribbon along the bottom with the barcode of the student ID */
+    d.setFillColor(...tc.band).rect(0,46.4,W,H-46.4,'F');d.setFillColor(...tc.acc).rect(0,46.4,W,.6,'F');
+    if(bits){d.setFillColor(255,255,255).roundedRect(5,47.8,W-10,5,1,1,'F');const bx=8.5,bw=W-17,mod=bw/bits.length;d.setFillColor(0,0,0);let i=0;while(i<bits.length){if(bits[i]==='1'){let j=i;while(j<bits.length&&bits[j]==='1')j++;d.rect(bx+i*mod,48.4,(j-i)*mod,3.8,'F');i=j}else i++}}
     d.save('Photo-Card-'+String(ME.sid||'student').replace(/[^A-Za-z0-9_-]/g,'')+'.pdf');
   }catch(e){alert('Could not make the photo card: '+(e.message||e))}
 }
@@ -201,7 +223,7 @@ function portal(){ME=null;TOK='';$('#pbox').innerHTML=`<div class=card style="ma
 
 async function init(){
  loadTheme();
- try{C=await run('getPublic')}catch(e){$('#pbox').innerHTML='<p class=err>Could not load the page: '+esc(em(e))+'</p>';return}
+ try{C=await run('getPublic');ktInit()}catch(e){$('#pbox').innerHTML='<p class=err>Could not load the page: '+esc(em(e))+'</p>';return}
  applyTheme(C);saveTheme();document.title=C.name+' - Student Portal';$('#hn').textContent=C.name;
  $('#foot').innerHTML=esc(C.name)+' &middot; '+esc(C.address)+' &middot; Call/WhatsApp '+esc(C.phone);
  const a=$('#home');a.href=window.SITE_HOME||C.siteUrl||'./';if(!window.SITE_HOME)a.target='_top';
