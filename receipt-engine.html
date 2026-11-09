@@ -1621,6 +1621,19 @@ document.head.appendChild(Object.assign(document.createElement('style'),{textCon
   '.dsh .c:nth-child(8){border-color:#5b6ee1;background:linear-gradient(135deg,rgba(91,110,225,.24),rgba(91,110,225,.04))}'}));
 
 ktStart();ktWalk(document.body);
+
+/* ---- switch off the web links of old website files (replaced flyers, deleted gallery photos, old logos) ---- */
+let RETPEND=false;
+{const _w6=webData;webData=function(){const d=_w6.apply(this,arguments);try{if(!__LS.getItem('kh-retired-v1')){d.retire=1;RETPEND=true}}catch(e){}return d}}
+{const _p6=pgCall;pgCall=async function(a){const r=await _p6.apply(this,arguments);if(a=='push'&&RETPEND){RETPEND=false;try{__LS.setItem('kh-retired-v1','1')}catch(e){}}return r}}
+async function retireNow(b){const c=pgCfg();if(!c.url||!c.key)return alert('Enter the website address and the admin key first (Settings > Cloud sync and website sync).');
+  if(!confirm('Switch off the web links of all old website files (replaced flyers, deleted gallery photos, old logos)?\n\nThe pictures now on your website are not affected.'))return;
+  const t=b.textContent;b.disabled=true;b.textContent='Working...';
+  try{const r=await pgCall('retireOld');try{__LS.setItem('kh-retired-v1','1')}catch(e){}logAdd('Website','Old file links switched off');
+    alert('Done. '+((r.old||0)+(r.inBin||0))+' old file link(s) switched off ('+(r.old||0)+' unused file(s) and '+(r.inBin||0)+' file(s) already in the Google Drive bin).')}
+  catch(e){alert('Could not switch off the old links: '+wsErr(e))}finally{b.disabled=false;b.textContent=t}}
+function oldLinksUI(){return `<div class=sec><h3>Old website file links</h3><p class=mut>When you replace the flyer or logo, or delete a gallery photo, the old picture's web link is switched off automatically. This button switches off the links of any older unused files left from before (including ones already in the Google Drive bin), so they can no longer be opened. It also runs once automatically the next time you press <b>Send data to website</b>.</p><div class=ba><button type=button class=b2 onclick="retireNow(this)">Switch off all old file links now</button></div></div>`}
+{const _t6=tplUI;tplUI=()=>_t6()+oldLinksUI()}
 </script><script>
 (function(){
   function post(m){try{parent.postMessage(m,location.origin)}catch(e){}}
